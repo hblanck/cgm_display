@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+#
+# cgm_display.py
+#
+
 #import ConfigParser #Python2 version
 import configparser #Python3 version
 import datetime
