@@ -369,26 +369,5 @@ def display_reading(reading):
     sleep(180)
 
 if __name__ == '__main__':
-    # create logger
-    #log = logging.getLogger(__file__)
-    #log.setLevel(logging.DEBUG)
-
-    # create file handler which logs even debug messages
-    #fh = logging.FileHandler('dexcom_tools.log')
-    #fh.setLevel(logging.INFO)
-
-    # create console handler with a higher log level
-    # ch = logging.StreamHandler()
-    # ch.setLevel(logging.DEBUG)
-
-    # create formatter and add it to the handlers
-    #formatter = logging.Formatter(
-    #    '{"timestamp": "%(asctime)s", "progname":' +
-    #    '"%(name)s", "loglevel": "%(levelname)s", "message":, "%(message)s"}')
-    #fh.setFormatter(formatter)
-    # ch.setFormatter(formatter)
-    #log.addHandler(fh)
-    # log.addHandler(ch)
-
     while True:
         monitor_dexcom(run_once=True)
