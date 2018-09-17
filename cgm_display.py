@@ -326,6 +326,7 @@ def adhoc_monitor():
     return reading
 
 def display_reading(reading):
+    logging.info("Getting ready to display on the LCD panel")
     os.putenv('SDL_FBDEV', '/dev/fb1')
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
