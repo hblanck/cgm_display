@@ -4,6 +4,7 @@ import configparser #Python3 version
 import datetime
 import logging
 import os
+import threading
 import platform
 import re
 import requests
@@ -317,16 +318,18 @@ def monitor_dexcom(run_once):
         time.sleep(opts.interval)
 
 
-def query_dexcom(push_report=False):
-    reading = monitor_dexcom(run_once=True)
-    return reading
+# To be removed
+# def query_dexcom(push_report=False):
+#     reading = monitor_dexcom(run_once=True)
+#     return reading
 
-def adhoc_monitor():
-    reading = query_dexcom(push_report=True)
-    return reading
+# To be removed
+# def adhoc_monitor():
+#     reading = query_dexcom(push_report=True)
+#     return reading
 
 def display_reading(reading):
-    log.info("Getting ready to display on the LCD panel")
+    log.debug("Getting ready to display on the LCD panel")
     os.putenv('SDL_FBDEV', '/dev/fb1')
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
@@ -363,7 +366,22 @@ def display_reading(reading):
     pygame.display.update()
     pygame.mouse.set_visible(False)
     #sleep(180)
+    
+def TimeAgoThread():
+    # On Raspberry Pi with LCD display only
+    if  platform.platform().find("arm") >= 0:
+        global lcd, pygame
+
+    while True:
+        log.debug("About to update Time Ago Display")
+        sleep(30)
 
 if __name__ == '__main__':
+
+    # Thread to update how long ago display every minute
+    TimeAgo = threading.Thread(target=TimeAgoThread)
+    TimeAgo.setName("TimeAgoThread")
+    TimeAgo.start()
+
     while True:
         monitor_dexcom(run_once=True)
