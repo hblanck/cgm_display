@@ -1,22 +1,22 @@
 #!/usr/bin/env python
-
-#
-# cgm_display.py
-#
-
 #import ConfigParser #Python2 version
 import configparser #Python3 version
 import datetime
 import logging
 import os
+import platform
 import re
 import requests
 import time
 import urllib
 import urllib.parse #Python3 requires this
 # import notify
-import pygame
 from time import sleep
+
+# On Raspberry Pi with LCD display only
+if  platform.platform().find("arm") >= 0:
+    import pygame
+
 
 log = logging.getLogger(__file__)
 log.setLevel(logging.ERROR)
@@ -30,7 +30,8 @@ log.addHandler(ch)
 
 #Config = ConfigParser.SafeConfigParser()
 Config = configparser.SafeConfigParser()
-Config.read("/home/pi/dexcom_tools-master/smoosh.ini")
+#Config.read("/home/pi/dexcom_tools-master/smoosh.ini")
+Config.read("./cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 
 DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
@@ -116,7 +117,7 @@ def login_payload(opts):
 
 def authorize(opts):
     """ Login to dexcom share and get a session token """
-
+ 
     url = Defaults.login_url
     body = login_payload(opts)
     headers = {
@@ -124,7 +125,7 @@ def authorize(opts):
             'Content-Type': Defaults.content_type,
             'Accept': Defaults.accept
             }
-
+ 
     return requests.post(url, json=body, headers=headers)
 
 
@@ -265,8 +266,11 @@ def monitor_dexcom(run_once):
                 reading = parse_dexcom_response(opts, res)
                 if reading:
                     if run_once:
-                        display_reading(reading)
-                        return reading
+                        # On Raspberry Pi with LCD display only
+                        if  platform.platform().find("arm") >= 0:
+                            display_reading(reading)
+                            sleep(180)
+                            return reading
                     else:
                         if reading['last_reading_time'] > opts.last_seen:
                             #report_glucose(reading)
@@ -315,16 +319,7 @@ def monitor_dexcom(run_once):
 
 def query_dexcom(push_report=False):
     reading = monitor_dexcom(run_once=True)
-    #if push_report and reading:
-    #    report_glucose(reading)
-    #    try:
-    #        if HEALTHCHECK_URL:
-    #            requests.get(HEALTHCHECK_URL)
-    #            log.debug("Sent healthcheck")
-    #    except ConnectionError as e:
-    #        log.error("Error sending healthcheck: {}".format(e))
     return reading
-
 
 def adhoc_monitor():
     reading = query_dexcom(push_report=True)
@@ -366,7 +361,7 @@ def display_reading(reading):
     lcd.blit(text_surface, rect)
     pygame.display.update()
     pygame.mouse.set_visible(False)
-    sleep(180)
+    #sleep(180)
 
 if __name__ == '__main__':
     while True:
