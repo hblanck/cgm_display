@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 #import ConfigParser #Python2 version
 import configparser #Python3 version
 import datetime
@@ -18,23 +19,16 @@ from time import sleep
 if  platform.platform().find("arm") >= 0:
     import pygame
 
-
 log = logging.getLogger(__file__)
 log.setLevel(logging.ERROR)
-formatter = logging.Formatter(
-    '{"timestamp": "%(asctime)s", "progname":' +
-    ' "%(name)s", "loglevel": "%(levelname)s", "message":, "%(message)s"}')
+formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 ch.setFormatter(formatter)
-ch.setLevel(logging.DEBUG)
+#ch.setLevel(logging.DEBUG)
 log.addHandler(ch)
 
 #Config = ConfigParser.SafeConfigParser()
 Config = configparser.SafeConfigParser()
-#Config.read("/home/pi/dexcom_tools-master/smoosh.ini")
-#print(__file__)
-#print(os.path.join(os.path.dirname(__file__)))
-#Config.read("cgm_display.ini")
 Config.read(os.path.join(os.path.dirname(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 
@@ -63,7 +57,6 @@ notify_bg_threshold = 170
 notify_rate_threshold = 10
 tempsilent = 0
 
-
 class Defaults:
     applicationId = "d89443d2-327c-4a6f-89e5-496bbb0317db"
     agent = "Dexcom Share/3.0.2.11 CFNetwork/711.2.23 Darwin/14.0.0"
@@ -78,7 +71,6 @@ class Defaults:
     nightscout_battery = '/api/v1/devicestatus.json'
     MIN_PASSPHRASE_LENGTH = 12
     last_seen = 0
-
 
 # Mapping friendly names to trend IDs from dexcom
 DIRECTIONS = {
@@ -108,7 +100,6 @@ ARROWS = {
     "9":"??"
 }
 
-
 def login_payload(opts):
     """ Build payload for the auth api query """
     body = {
@@ -132,7 +123,6 @@ def authorize(opts):
  
     return requests.post(url, json=body, headers=headers)
 
-
 def fetch_query(opts):
     """ Build the api query for the data fetch
     """
@@ -143,7 +133,6 @@ def fetch_query(opts):
         }
     url = Defaults.LatestGlucose_url + '?' + urllib.parse.urlencode(q)
     return url
-
 
 def fetch(opts):
     """ Fetch latest reading from dexcom share
@@ -162,11 +151,9 @@ def fetch(opts):
 
     return requests.post(url, json=body, headers=headers)
 
-
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
-
 
 class AuthError(Error):
     """Exception raised for errors when trying to Auth to Dexcome share
@@ -176,7 +163,6 @@ class AuthError(Error):
         self.expression = status_code
         self.message = message
         log.error(message.__dict__)
-
 
 class FetchError(Error):
     """Exception raised for errors in the date fetch.
@@ -229,7 +215,6 @@ def parse_dexcom_response(ops, res):
         log.error(res.__dict__)
         return None
 
-
 def get_sessionID(opts):
     authfails = 0
     while not opts.sessionID:
@@ -245,7 +230,6 @@ def get_sessionID(opts):
                 time.sleep(AUTH_RETRY_DELAY_BASE**authfails)
                 authfails += 1
     return opts.sessionID
-
 
 def monitor_dexcom(run_once):
     """ Main loop """
@@ -273,7 +257,7 @@ def monitor_dexcom(run_once):
                         # On Raspberry Pi with LCD display only
                         if  platform.platform().find("arm") >= 0:
                             display_reading(reading)
-                            sleep(180)
+                            #sleep(180)
                             return reading
                     else:
                         if reading['last_reading_time'] > opts.last_seen:
@@ -319,17 +303,6 @@ def monitor_dexcom(run_once):
             time.sleep(RETRY_DELAY)
 
         time.sleep(opts.interval)
-
-
-# To be removed
-# def query_dexcom(push_report=False):
-#     reading = monitor_dexcom(run_once=True)
-#     return reading
-
-# To be removed
-# def adhoc_monitor():
-#     reading = query_dexcom(push_report=True)
-#     return reading
 
 def display_reading(reading):
     log.debug("Getting ready to display on the LCD panel")
@@ -380,7 +353,6 @@ def TimeAgoThread():
         sleep(30)
 
 if __name__ == '__main__':
-
     # Thread to update how long ago display every minute
     TimeAgo = threading.Thread(target=TimeAgoThread)
     TimeAgo.setName("TimeAgoThread")
@@ -388,3 +360,4 @@ if __name__ == '__main__':
 
     while True:
         monitor_dexcom(run_once=True)
+        sleep(180)
