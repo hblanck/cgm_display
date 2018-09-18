@@ -145,9 +145,7 @@ def monitor_dexcom(run_once):
 
                 else:
                     opts.sessionID = None
-                    log.error(
-                            "parse_dexcom_response returned None." +
-                            "investigate above logs")
+                    log.error("parse_dexcom_response returned None.  Investigate above logs")
                     if run_once:
                         return None
             else:
@@ -253,15 +251,15 @@ if __name__ == '__main__':
 
     #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     TheReading=monitor_dexcom(run_once=True)
+    i = 1
     # Thread to update how long ago display every minute
     TimeAgo = threading.Thread(target=TimeAgoThread)
     TimeAgo.setName("TimeAgoThread")
     TimeAgo.start()
     sleep(180)
 
-    i = 0
     while True:
-        i = i + 1
+        i += 1
         TheReading=monitor_dexcom(run_once=True)
         log.debug("Iteration #"+str(i) + "-" + str(TheReading))
-        sleep(180)
+        sleep(120)
