@@ -8,10 +8,45 @@ class Defaults:
     LatestGlucose_url = "https://share1.dexcom.com/ShareWebServices/" +\
         "Services/Publisher/ReadPublisherLatestGlucoseValues"
     sessionID = None
-    nightscout_upload = '/api/v1/entries.json'
-    nightscout_battery = '/api/v1/devicestatus.json'
     MIN_PASSPHRASE_LENGTH = 12
     last_seen = 0
+    # Mapping friendly names to trend IDs from dexcom
+    DIRECTIONS = {
+        "nodir": 0,
+        "DoubleUp": 1,
+        "SingleUp": 2,
+        "FortyFiveUp": 3,
+        "Flat": 4,
+        "FortyFiveDown": 5,
+        "SingleDown": 6,
+        "DoubleDown": 7,
+        "NOT COMPUTABLE": 8,
+        "RATE OUT OF RANGE": 9,
+    }
+
+    #Arrow Characters based on ucs2 character set
+    ARROWS = {
+        "0":chr(int("0x32",16)),
+        "1":chr(int("0x21D1",16)),
+        "2":chr(int("0x2191",16)),
+        "3":chr(int("0x2197",16)),
+        "4":chr(int("0x2192",16)),
+        "5":chr(int("0x2198",16)),
+        "6":chr(int("0x2193",16)),
+        "7":chr(int("0x21D3",16)),
+        "8":"??",
+        "9":"??"
+    }
+
+    #Colors we use
+    WHITE=(255,255,255)
+    BLACK=(0,0,0)
+    GREY=(160,160,160)
+    BLUE=(0,0,255)
+
+    #Nighttime for Night Mode
+    NIGHTMODE=(22,23,24,0,1,2,3,4,5) #Hours to use Night Mode
+
 
 class Error(Exception):
     """Base class for exceptions in this module."""

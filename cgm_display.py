@@ -12,7 +12,7 @@ import requests
 import time
 import urllib
 import urllib.parse #Python3 requires this
-# import notify
+import http_general
 from time import sleep
 from Defaults import Defaults, Error, AuthError, FetchError
 
@@ -31,7 +31,10 @@ log.addHandler(ch)
 #Config = ConfigParser.SafeConfigParser()
 Config = configparser.SafeConfigParser()
 Config.read(os.path.join(os.path.dirname(__file__))+"/cgm_display.ini")
+print(os.path.join(os.path.dirname(__file__)))
 log.setLevel(Config.get("logging", 'log_level').upper())
+
+global TheReading
 
 DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
 DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
@@ -43,140 +46,9 @@ MAX_FETCHFAILS = 10
 RETRY_DELAY = 60 # Seconds
 LAST_READING_MAX_LAG = 60 * 7.5
 
-#Colors we use
-WHITE=(255,255,255)
-BLACK=(0,0,0)
-GREY=(160,160,160)
-BLUE=(0,0,255)
-
-#Nighttime for Night Mode
-NIGHTMODE=(22,23,24,0,1,2,3,4,5) #Hours to use Night Mode
-
-last_date = 0
-notify_timeout = 5
-notify_bg_threshold = 170
-notify_rate_threshold = 10
-tempsilent = 0
-
-# class Defaults:
-#     applicationId = "d89443d2-327c-4a6f-89e5-496bbb0317db"
-#     agent = "Dexcom Share/3.0.2.11 CFNetwork/711.2.23 Darwin/14.0.0"
-#     login_url = "https://share1.dexcom.com/ShareWebServices/Services/" +\
-#         "General/LoginPublisherAccountByName"
-#     accept = 'application/json'
-#     content_type = 'application/json'
-#     LatestGlucose_url = "https://share1.dexcom.com/ShareWebServices/" +\
-#         "Services/Publisher/ReadPublisherLatestGlucoseValues"
-#     sessionID = None
-#     nightscout_upload = '/api/v1/entries.json'
-#     nightscout_battery = '/api/v1/devicestatus.json'
-#     MIN_PASSPHRASE_LENGTH = 12
-#     last_seen = 0
-
-# Mapping friendly names to trend IDs from dexcom
-DIRECTIONS = {
-    "nodir": 0,
-    "DoubleUp": 1,
-    "SingleUp": 2,
-    "FortyFiveUp": 3,
-    "Flat": 4,
-    "FortyFiveDown": 5,
-    "SingleDown": 6,
-    "DoubleDown": 7,
-    "NOT COMPUTABLE": 8,
-    "RATE OUT OF RANGE": 9,
-}
-keys = DIRECTIONS.keys()
-
-ARROWS = {
-    "0":chr(int("0x32",16)),
-    "1":chr(int("0x21D1",16)),
-    "2":chr(int("0x2191",16)),
-    "3":chr(int("0x2197",16)),
-    "4":chr(int("0x2192",16)),
-    "5":chr(int("0x2198",16)),
-    "6":chr(int("0x2193",16)),
-    "7":chr(int("0x21D3",16)),
-    "8":"??",
-    "9":"??"
-}
-
-def login_payload(opts):
-    """ Build payload for the auth api query """
-    body = {
-        "password": opts.password,
-        "applicationId": opts.applicationId,
-        "accountName": opts.accountName
-        }
-    return body
-
-
-def authorize(opts):
-    """ Login to dexcom share and get a session token """
- 
-    url = Defaults.login_url
-    body = login_payload(opts)
-    headers = {
-            'User-Agent': Defaults.agent,
-            'Content-Type': Defaults.content_type,
-            'Accept': Defaults.accept
-            }
- 
-    return requests.post(url, json=body, headers=headers)
-
-def fetch_query(opts):
-    """ Build the api query for the data fetch
-    """
-    q = {
-        "sessionID": opts.sessionID,
-        "minutes":  1440,
-        "maxCount": 1
-        }
-    url = Defaults.LatestGlucose_url + '?' + urllib.parse.urlencode(q)
-    return url
-
-def fetch(opts):
-    """ Fetch latest reading from dexcom share
-    """
-    url = fetch_query(opts)
-    body = {
-            'applicationId': 'd89443d2-327c-4a6f-89e5-496bbb0317db'
-            }
-
-    headers = {
-            'User-Agent': Defaults.agent,
-            'Content-Type': Defaults.content_type,
-            'Content-Length': "0",
-            'Accept': Defaults.accept
-            }
-
-    return requests.post(url, json=body, headers=headers)
-
-# class Error(Exception):
-#     """Base class for exceptions in this module."""
-#     pass
-# 
-# class AuthError(Error):
-#     """Exception raised for errors when trying to Auth to Dexcome share
-#     """
-# 
-#     def __init__(self, status_code, message):
-#         self.expression = status_code
-#         self.message = message
-#         log.error(message.__dict__)
-# 
-# class FetchError(Error):
-#     """Exception raised for errors in the date fetch.
-#     """
-# 
-#     def __init__(self, status_code, message):
-#         self.expression = status_code
-#         self.message = message
-#         log.error(message.__dict__)
-
 def isNightTime():
     now = datetime.datetime.now()
-    if now.hour in NIGHTMODE:
+    if now.hour in Defaults.NIGHTMODE:
         return True
     else:
         return False
@@ -191,8 +63,9 @@ def parse_dexcom_response(ops, res):
         reading_lag = epochtime - last_reading_time
         trend = res.json()[0]['Trend']
         mgdl = res.json()[0]['Value']
+        
         #trend_english = DIRECTIONS.keys()[DIRECTIONS.values().index(trend)] # Python2 version
-        trend_english=list(DIRECTIONS.keys())[list(DIRECTIONS.values()).index(trend)] # Python3 version
+        trend_english=list(Defaults.DIRECTIONS.keys())[list(Defaults.DIRECTIONS.values()).index(trend)] # Python3 version
         log.info("Last bg: {}  trending: {} ({})  last reading at: {} seconds ago".format(mgdl, trend_english, trend, reading_lag))
         if reading_lag > LAST_READING_MAX_LAG:
             log.warning(
@@ -219,7 +92,7 @@ def parse_dexcom_response(ops, res):
 def get_sessionID(opts):
     authfails = 0
     while not opts.sessionID:
-        res = authorize(opts)
+        res = http_general.authorize(opts)
         if res.status_code == 200:
             opts.sessionID = res.text.strip('"')
             log.debug("Got auth token {}".format(opts.sessionID))
@@ -249,7 +122,7 @@ def monitor_dexcom(run_once):
             authfails = 0
             opts.sessionID = get_sessionID(opts)
         try:
-            res = fetch(opts)
+            res = http_general.fetch(opts)
             if res and res.status_code < 400:
                 fetchfails = 0
                 reading = parse_dexcom_response(opts, res)
@@ -259,7 +132,7 @@ def monitor_dexcom(run_once):
                         if  platform.platform().find("arm") >= 0:
                             display_reading(reading)
                             #sleep(180)
-                            return reading
+                        return reading
                     else:
                         if reading['last_reading_time'] > opts.last_seen:
                             #report_glucose(reading)
@@ -311,11 +184,11 @@ def display_reading(reading):
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
     if isNightTime():
-       lcd.fill(BLACK)
-       font_color=GREY
+       lcd.fill(Defaults.BLACK)
+       font_color=Defaults.GREY
     else:
-       lcd.fill(BLUE)
-       font_color=WHITE
+       lcd.fill(Defaults.BLUE)
+       font_color=Defaults.WHITE
 
     font_time = pygame.font.Font(None, 75)
     lag_time = int(reading["reading_lag"]/60)
@@ -336,29 +209,47 @@ def display_reading(reading):
     if reading["last_reading_lag"] == True:
        str_reading = "---"
     else:
-       str_reading = str(reading["bg"])+ARROWS[str(trend_index)]
+       str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
     text_surface = font_big.render(str_reading, True, font_color)
     rect = text_surface.get_rect(center=(240,160))
     lcd.blit(text_surface, rect)
     pygame.display.update()
     pygame.mouse.set_visible(False)
-    #sleep(180)
     
 def TimeAgoThread():
     # On Raspberry Pi with LCD display only
     if  platform.platform().find("arm") >= 0:
         global lcd, pygame
+    global TheReading
  
     while True:
-        log.debug("About to update Time Ago Display")
+        epochtime = int((
+                datetime.datetime.utcnow() -
+                datetime.datetime(1970, 1, 1)).total_seconds())
+        last_reading_time = int(TheReading["last_reading_time"])/1000
+        reading_lag = (epochtime - last_reading_time)/1000
+
+        #log.debug("TheReading[\"last_reading_time\"] = " + str(TheReading["last_reading_time"]))
+        #log.debug("epochtime = " + str(epochtime))
+        #log.debug("last_reading_time =" + str(last_reading_time))
+        #log.debug("reading_lag = " + str(reading_lag))
+
+        log.debug("About to update Time Ago Display with reading from " + str(reading_lag) + " minutes ago")
         sleep(30)
 
-if __name__ == '__main__':
+if __name__ == '__main__':      
+
+    #One initial reading to have data for the TimeAgo Thread before we get into the main loop
+    TheReading=monitor_dexcom(run_once=True)
     # Thread to update how long ago display every minute
     TimeAgo = threading.Thread(target=TimeAgoThread)
     TimeAgo.setName("TimeAgoThread")
     TimeAgo.start()
+    sleep(180)
 
+    i = 0
     while True:
-        monitor_dexcom(run_once=True)
+        i = i + 1
+        TheReading=monitor_dexcom(run_once=True)
+        log.debug("Iteration #"+str(i) + "-" + str(TheReading))
         sleep(180)
