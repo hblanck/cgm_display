@@ -33,7 +33,7 @@ Config = configparser.SafeConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 
-global TheReading
+global TheReading, lcd
 
 DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
 DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
@@ -181,6 +181,7 @@ def display_reading(reading):
     log.debug("Getting ready to display on the LCD panel")
     os.putenv('SDL_FBDEV', '/dev/fb1')
     pygame.init()
+    global lcd
     lcd=pygame.display.set_mode((480, 320))
     if isNightTime():
        lcd.fill(Defaults.BLACK)
