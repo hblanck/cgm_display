@@ -222,19 +222,25 @@ def TimeAgoThread():
     global TheReading
  
     while True:
-        epochtime = int((
-                datetime.datetime.utcnow() -
-                datetime.datetime(1970, 1, 1)).total_seconds())
-        last_reading_time = int(TheReading["last_reading_time"])/1000
-        reading_lag = (epochtime - last_reading_time)/1000
-
-        #log.debug("TheReading[\"last_reading_time\"] = " + str(TheReading["last_reading_time"]))
-        #log.debug("epochtime = " + str(epochtime))
-        #log.debug("last_reading_time =" + str(last_reading_time))
-        #log.debug("reading_lag = " + str(reading_lag))
-
-        log.debug("About to update Time Ago Display with reading from " + str(reading_lag) + " minutes ago")
-        sleep(30)
+        now = datetime.datetime.utcnow()
+        reading_time = datetime.datetime.utcfromtimestamp(TheReading["last_reading_time"])
+        difference = round((now - reading_time).total_seconds()/60)
+        if difference == 0:
+            str_difference = "Just Now"
+        elif difference == 1:
+            str_difference = str(difference) + " Minute Ago"
+        else:
+            str_difference = str(difference) + " Minutes Ago"
+        log.info("About to update Time Ago Display with reading from " + str_difference)
+        # On Raspberry Pi with LCD display only
+        if  platform.platform().find("arm") >= 0:
+            global lcd, pygame
+            font_time = pygame.font.Font(None, 75)
+            text_surface = font_time.render(str_difference, True, font_color)
+            rect = text_surface.get_rect(center=(240,20))
+            lcd.blit(text_surface, rect)
+            pygame.display.update()
+        sleep(15)
 
 if __name__ == '__main__':      
 
