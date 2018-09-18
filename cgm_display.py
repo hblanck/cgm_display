@@ -20,9 +20,6 @@ from Defaults import Defaults, Error, AuthError, FetchError
 if  platform.platform().find("arm") >= 0:
     import pygame
 
-print(os.path.join(os.path.dirname(__file__)))
-
-
 log = logging.getLogger(__file__)
 log.setLevel(logging.ERROR)
 formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
@@ -33,7 +30,7 @@ log.addHandler(ch)
 
 #Config = ConfigParser.SafeConfigParser()
 Config = configparser.SafeConfigParser()
-Config.read(os.path.join(os.path.dirname(__file__))+"/cgm_display.ini")
+Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 
 global TheReading
