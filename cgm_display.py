@@ -235,10 +235,10 @@ def TimeAgoThread():
         # On Raspberry Pi with LCD display only
         if  platform.platform().find("arm") >= 0:
             if isNightTime():
-               lcd.fill(Defaults.BLACK)
+               #lcd.fill(Defaults.BLACK)
                font_color=Defaults.GREY
             else:
-               lcd.fill(Defaults.BLUE)
+               #lcd.fill(Defaults.BLUE)
                font_color=Defaults.WHITE
             global lcd, pygame
             font_time = pygame.font.Font(None, 75)
