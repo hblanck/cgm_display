@@ -207,8 +207,6 @@ def display_reading(reading):
     lcd.blit(text_surface, rect)
     pygame.display.update()
     pygame.mouse.set_visible(False)
-
-
    
 def TimeAgoThread():
     # On Raspberry Pi with LCD display only
