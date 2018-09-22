@@ -240,7 +240,7 @@ def TimeAgoThread():
 #             lcd.blit(text_surface, rect)
 #             pygame.display.update()
         display_reading(TheReading)
-        sleep(15)
+        sleep(30)
 
 if __name__ == '__main__':      
 
