@@ -104,82 +104,66 @@ def get_sessionID(opts):
                 authfails += 1
     return opts.sessionID
 
-def monitor_dexcom(run_once):
+def monitor_dexcom():
     """ Main loop """
     opts = Defaults
     opts.accountName = os.getenv("DEXCOM_ACCOUNT_NAME", DEXCOM_ACCOUNT_NAME)
     opts.password = os.getenv("DEXCOM_PASSWORD", DEXCOM_PASSWORD)
     opts.interval = float(os.getenv("CHECK_INTERVAL", CHECK_INTERVAL))
-
-    runs = 0
     fetchfails = 0
     failures = 0
-    while True:
-        log.debug("RUNNING {}, failures: {}".format(runs, failures))
-        runs += 1
-        if not opts.sessionID:
-            authfails = 0
-            opts.sessionID = get_sessionID(opts)
-        try:
-            res = http_general.fetch(opts)
-            if res and res.status_code < 400:
-                fetchfails = 0
-                reading = parse_dexcom_response(opts, res)
-                if reading:
-                    if run_once:
-                        # On Raspberry Pi with LCD display only
-                        if  platform.platform().find("arm") >= 0:
-                            display_reading(reading)
-                            #sleep(180)
-                        return reading
-                    else:
-                        if reading['last_reading_time'] > opts.last_seen:
-                            #report_glucose(reading)
-                            opts.sessionID = "foo"
-                            opts.last_seen = reading['last_reading_time']
-                            try:
-                                if HEALTHCHECK_URL:
-                                    requests.get(HEALTHCHECK_URL)
-                            except ConnectionError as e:
-                                log.error("Error sending healthcheck: {}".format(e))
-
-                else:
-                    opts.sessionID = None
-                    log.error("parse_dexcom_response returned None.  Investigate above logs")
-                    if run_once:
-                        return None
+    #log.debug("RUNNING {}, failures: {}".format(runs, failures))
+    if not opts.sessionID:
+        authfails = 0
+        opts.sessionID = get_sessionID(opts)
+    try:
+        res = http_general.fetch(opts)
+        if res and res.status_code < 400:
+            fetchfails = 0
+            reading = parse_dexcom_response(opts, res)
+            if reading:
+                # On Raspberry Pi with LCD display only
+                if  platform.platform().find("arm") >= 0:
+                    display_reading(reading)
+                    #sleep(180)
+                return reading
             else:
-                failures += 1
-                if run_once or fetchfails > MAX_FETCHFAILS:
-                    opts.sessionID = None
-                    log.warning("Saw an error from the dexcom api, code: {}.  details to follow".format(res.status_code))
-                    raise FetchError(res.status_code, res)
-                else:
-                    log.warning("Fetch failed on: {}".format(res.status_code))
-                    if fetchfails > (MAX_FETCHFAILS/2):
-                        log.warning("Trying to re-auth...")
-                        opts.sessionID = None
-                    else:
-                        log.warning("Trying again...")
-                    time.sleep((FAIL_RETRY_DELAY_BASE**authfails))
-                    #opts.interval)
-                    fetchfails += 1
-        except ConnectionError:
+                opts.sessionID = None
+                log.error("parse_dexcom_response returned None.  Investigate above logs")
+                if run_once:
+                    return None
+        else:
+            failures += 1
             opts.sessionID = None
-            if run_once:
-                raise
-            log.warning(
-                    "Cnnection Error.. sleeping for {} seconds and".format(RETRY_DELAY) +
-                    " trying again")
-            time.sleep(RETRY_DELAY)
+            log.warning("Saw an error from the dexcom api, code: {}.  details to follow".format(res.status_code))
+            raise FetchError(res.status_code, res)
+            log.warning("Fetch failed on: {}".format(res.status_code))
+            if fetchfails > (MAX_FETCHFAILS/2):
+                log.warning("Trying to re-auth...")
+                opts.sessionID = None
+            else:
+                log.warning("Trying again...")
+            time.sleep((FAIL_RETRY_DELAY_BASE**authfails))
+            fetchfails += 1
 
-        time.sleep(opts.interval)
+    except ConnectionError:
+        opts.sessionID = None
+        raise log.warning("Cnnection Error.. sleeping for {} seconds and".format(RETRY_DELAY) + " trying again")
+        time.sleep(RETRY_DELAY)
+
+    #time.sleep(opts.interval)
+    return False
 
 def display_reading(reading):
     log.debug("Getting ready to display on the LCD panel")
     os.putenv('SDL_FBDEV', '/dev/fb1')
+     # On Raspberry Pi with LCD display only
+    if not platform.platform().find("arm") >= 0:
+        log.debug("Skipping display.  Not on Raspberry Pi")
+        return
+
     pygame.init()
-    global lcd
+    #global lcd
     lcd=pygame.display.set_mode((480, 320))
     if isNightTime():
        lcd.fill(Defaults.BLACK)
@@ -189,16 +173,26 @@ def display_reading(reading):
        font_color=Defaults.WHITE
 
     font_time = pygame.font.Font(None, 75)
-    lag_time = int(reading["reading_lag"]/60)
-    if lag_time == 0:
-        str_lag_time = "Just Now"
-    elif lag_time == 1:
-        str_lag_time = str(lag_time) + " Minute Ago"
-    else:
-        str_lag_time = str(lag_time) + " Minutes Ago"
+#     lag_time = int(reading["reading_lag"]/60)
+#     if lag_time == 0:
+#         str_lag_time = "Just Now"
+#     elif lag_time == 1:
+#         str_lag_time = str(lag_time) + " Minute Ago"
+#     else:
+#         str_lag_time = str(lag_time) + " Minutes Ago"
 
+    now = datetime.datetime.utcnow()
+    reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
+    difference = round((now - reading_time).total_seconds()/60)
+    if difference == 0:
+        str_difference = "Just Now"
+    elif difference == 1:
+        str_difference = str(difference) + " Minute Ago"
+    else:
+        str_difference = str(difference) + " Minutes Ago"
+    log.info("About to update Time Ago Display with reading from " + str_difference)
     #str_reading_time = time.strftime("%b %e %I:%M%p", time.localtime(flt_time))
-    text_surface = font_time.render(str_lag_time, True, font_color)
+    text_surface = font_time.render(str_difference, True, font_color)
     rect = text_surface.get_rect(center=(240,20))
     lcd.blit(text_surface, rect)
 
@@ -216,21 +210,21 @@ def display_reading(reading):
     
 def TimeAgoThread():
     # On Raspberry Pi with LCD display only
-    if  platform.platform().find("arm") >= 0:
-        global lcd, pygame
+#     if  platform.platform().find("arm") >= 0:
+#         global lcd, pygame
     global TheReading
  
     while True:
-        now = datetime.datetime.utcnow()
-        reading_time = datetime.datetime.utcfromtimestamp(TheReading["last_reading_time"])
-        difference = round((now - reading_time).total_seconds()/60)
-        if difference == 0:
-            str_difference = "Just Now"
-        elif difference == 1:
-            str_difference = str(difference) + " Minute Ago"
-        else:
-            str_difference = str(difference) + " Minutes Ago"
-        log.info("About to update Time Ago Display with reading from " + str_difference)
+#         now = datetime.datetime.utcnow()
+#         reading_time = datetime.datetime.utcfromtimestamp(TheReading["last_reading_time"])
+#         difference = round((now - reading_time).total_seconds()/60)
+#         if difference == 0:
+#             str_difference = "Just Now"
+#         elif difference == 1:
+#             str_difference = str(difference) + " Minute Ago"
+#         else:
+#             str_difference = str(difference) + " Minutes Ago"
+#         log.info("About to update Time Ago Display with reading from " + str_difference)
         # On Raspberry Pi with LCD display only
 #         if  platform.platform().find("arm") >= 0:
 #             if isNightTime():
@@ -245,12 +239,13 @@ def TimeAgoThread():
 #             rect = text_surface.get_rect(center=(240,20))
 #             lcd.blit(text_surface, rect)
 #             pygame.display.update()
+        display_reading(TheReading)
         sleep(15)
 
 if __name__ == '__main__':      
 
     #One initial reading to have data for the TimeAgo Thread before we get into the main loop
-    TheReading=monitor_dexcom(run_once=True)
+    TheReading=monitor_dexcom()
     i = 1
     # Thread to update how long ago display every minute
     TimeAgo = threading.Thread(target=TimeAgoThread)
@@ -260,6 +255,6 @@ if __name__ == '__main__':
 
     while True:
         i += 1
-        TheReading=monitor_dexcom(run_once=True)
+        TheReading=monitor_dexcom()
         log.debug("Iteration #"+str(i) + "-" + str(TheReading))
         sleep(120)
