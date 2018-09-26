@@ -161,6 +161,7 @@ def display_reading(reading):
     if not platform.platform().find("arm") >= 0:
         log.debug("Skipping display.  Not on Raspberry Pi")
         return
+    global pygame, lcd
     log.debug("Getting ready to display on the LCD panel")
     os.putenv('SDL_FBDEV', '/dev/fb1')
 
@@ -178,18 +179,19 @@ def display_reading(reading):
 
     try:
         if isNightTime():
+           log.debug("Setting to Nighttime mode")
            lcd.fill(Defaults.BLACK)
            font_color=Defaults.GREY
         else:
+           log.debug("Setting to Daylight mode")
            lcd.fill(Defaults.BLUE)
            font_color=Defaults.WHITE
         
         font_time = pygame.font.Font(None, 75)
-        
         text_surface = font_time.render(str_difference, True, font_color)
         rect = text_surface.get_rect(center=(240,20))
         lcd.blit(text_surface, rect)
-        
+
         font_big = pygame.font.Font(None, 250)
         trend_index = reading["trend"]
         if reading["last_reading_lag"] == True:
