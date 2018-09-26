@@ -20,6 +20,7 @@ from Defaults import Defaults, Error, AuthError, FetchError
 if  platform.platform().find("arm") >= 0:
     import pygame
     global pygame, lcd
+    os.putenv('SDL_FBDEV', '/dev/fb1')
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
 
@@ -163,7 +164,7 @@ def display_reading(reading):
         return
     global pygame, lcd
     log.debug("Getting ready to display on the LCD panel")
-    os.putenv('SDL_FBDEV', '/dev/fb1')
+    #os.putenv('SDL_FBDEV', '/dev/fb1')
 
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
