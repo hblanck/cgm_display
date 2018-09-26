@@ -176,7 +176,9 @@ def display_reading(reading):
     else:
         str_difference = str(difference) + " Minutes Ago"
     log.info("About to update Time Ago Display with reading from " + str_difference)
+    log.debug("About to acquire lock with: "+str(lock))
     lock.acquire(blocking=True)
+    log.debug("Acquired lock "+str(lock))
 
     try:
         if isNightTime():
@@ -205,7 +207,9 @@ def display_reading(reading):
         pygame.display.update()
         pygame.mouse.set_visible(False)
     finally:
+        log.debug("About to release lock: "+str(lock))
         lock.release()
+        log.debug("Lock released: "+str(lock))
    
 def TimeAgoThread():
     global TheReading
@@ -215,6 +219,7 @@ def TimeAgoThread():
 
 if __name__ == '__main__':      
     lock = threading.RLock()
+    log.debug("Created lock: " + str(lock))
     #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     TheReading=monitor_dexcom()
     i = 1
