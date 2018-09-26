@@ -33,7 +33,7 @@ Config = configparser.SafeConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 
-global TheReading, lcd
+global TheReading, pygame,lcd
 
 DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
 DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
@@ -162,96 +162,64 @@ def display_reading(reading):
         log.debug("Skipping display.  Not on Raspberry Pi")
         return
 
-    pygame.init()
-    #global lcd
-    lcd=pygame.display.set_mode((480, 320))
-    if isNightTime():
-       lcd.fill(Defaults.BLACK)
-       font_color=Defaults.GREY
-    else:
-       lcd.fill(Defaults.BLUE)
-       font_color=Defaults.WHITE
-
-    font_time = pygame.font.Font(None, 75)
-#     lag_time = int(reading["reading_lag"]/60)
-#     if lag_time == 0:
-#         str_lag_time = "Just Now"
-#     elif lag_time == 1:
-#         str_lag_time = str(lag_time) + " Minute Ago"
-#     else:
-#         str_lag_time = str(lag_time) + " Minutes Ago"
-
-    now = datetime.datetime.utcnow()
-    reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
-    difference = round((now - reading_time).total_seconds()/60)
-    if difference == 0:
-        str_difference = "Just Now"
-    elif difference == 1:
-        str_difference = str(difference) + " Minute Ago"
-    else:
-        str_difference = str(difference) + " Minutes Ago"
-    log.info("About to update Time Ago Display with reading from " + str_difference)
-    #str_reading_time = time.strftime("%b %e %I:%M%p", time.localtime(flt_time))
-    text_surface = font_time.render(str_difference, True, font_color)
-    rect = text_surface.get_rect(center=(240,20))
-    lcd.blit(text_surface, rect)
-
-    font_big = pygame.font.Font(None, 250)
-    trend_index = reading["trend"]
-    if reading["last_reading_lag"] == True:
-       str_reading = "---"
-    else:
-       str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
-    text_surface = font_big.render(str_reading, True, font_color)
-    rect = text_surface.get_rect(center=(240,160))
-    lcd.blit(text_surface, rect)
-    pygame.display.update()
-    pygame.mouse.set_visible(False)
+    lock.acquire(blocking=True)
+    try:
+        now = datetime.datetime.utcnow()
+        reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
+        difference = round((now - reading_time).total_seconds()/60)
+        if difference == 0:
+            str_difference = "Just Now"
+        elif difference == 1:
+            str_difference = str(difference) + " Minute Ago"
+        else:
+            str_difference = str(difference) + " Minutes Ago"
+        log.info("About to update Time Ago Display with reading from " + str_difference)
+        
+        if isNightTime():
+           lcd.fill(Defaults.BLACK)
+           font_color=Defaults.GREY
+        else:
+           lcd.fill(Defaults.BLUE)
+           font_color=Defaults.WHITE
+        
+        font_time = pygame.font.Font(None, 75)
+        
+        text_surface = font_time.render(str_difference, True, font_color)
+        rect = text_surface.get_rect(center=(240,20))
+        lcd.blit(text_surface, rect)
+        
+        font_big = pygame.font.Font(None, 250)
+        trend_index = reading["trend"]
+        if reading["last_reading_lag"] == True:
+           str_reading = "---"
+        else:
+           str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
+        text_surface = font_big.render(str_reading, True, font_color)
+        rect = text_surface.get_rect(center=(240,160))
+        lcd.blit(text_surface, rect)
+        pygame.display.update()
+        pygame.mouse.set_visible(False)
+    finally:
+        lock.release()
    
 def TimeAgoThread():
-    # On Raspberry Pi with LCD display only
-#     if  platform.platform().find("arm") >= 0:
-#         global lcd, pygame
     global TheReading
- 
     while True:
-#         now = datetime.datetime.utcnow()
-#         reading_time = datetime.datetime.utcfromtimestamp(TheReading["last_reading_time"])
-#         difference = round((now - reading_time).total_seconds()/60)
-#         if difference == 0:
-#             str_difference = "Just Now"
-#         elif difference == 1:
-#             str_difference = str(difference) + " Minute Ago"
-#         else:
-#             str_difference = str(difference) + " Minutes Ago"
-#         log.info("About to update Time Ago Display with reading from " + str_difference)
-        # On Raspberry Pi with LCD display only
-#         if  platform.platform().find("arm") >= 0:
-#             if isNightTime():
-#                #lcd.fill(Defaults.BLACK)
-#                font_color=Defaults.GREY
-#             else:
-#                #lcd.fill(Defaults.BLUE)
-#                font_color=Defaults.WHITE
-#             global lcd, pygame
-#             font_time = pygame.font.Font(None, 75)
-#             text_surface = font_time.render(str_difference, True, font_color)
-#             rect = text_surface.get_rect(center=(240,20))
-#             lcd.blit(text_surface, rect)
-#             pygame.display.update()
         display_reading(TheReading)
         sleep(30)
 
 if __name__ == '__main__':      
-
+    pygame.init()
+    lcd=pygame.display.set_mode((480, 320))
+    lock = threading.RLock()
     #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     TheReading=monitor_dexcom()
     i = 1
-    # Thread to update how long ago display every minute
+
     TimeAgo = threading.Thread(target=TimeAgoThread)
     TimeAgo.setName("TimeAgoThread")
     TimeAgo.start()
-    sleep(180)
+    sleep(120)
 
     while True:
         i += 1
