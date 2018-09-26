@@ -19,13 +19,15 @@ from Defaults import Defaults, Error, AuthError, FetchError
 # On Raspberry Pi with LCD display only
 if  platform.platform().find("arm") >= 0:
     import pygame
+    global pygame, lcd
+    pygame.init()
+    lcd=pygame.display.set_mode((480, 320))
 
 log = logging.getLogger(__file__)
 log.setLevel(logging.ERROR)
 formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 ch.setFormatter(formatter)
-#ch.setLevel(logging.DEBUG)
 log.addHandler(ch)
 
 #Config = ConfigParser.SafeConfigParser()
@@ -33,7 +35,7 @@ Config = configparser.SafeConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 
-global TheReading, pygame,lcd
+global TheReading
 
 DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
 DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
@@ -155,26 +157,26 @@ def monitor_dexcom():
     return False
 
 def display_reading(reading):
-    log.debug("Getting ready to display on the LCD panel")
-    os.putenv('SDL_FBDEV', '/dev/fb1')
      # On Raspberry Pi with LCD display only
     if not platform.platform().find("arm") >= 0:
         log.debug("Skipping display.  Not on Raspberry Pi")
         return
+    log.debug("Getting ready to display on the LCD panel")
+    os.putenv('SDL_FBDEV', '/dev/fb1')
 
+    now = datetime.datetime.utcnow()
+    reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
+    difference = round((now - reading_time).total_seconds()/60)
+    if difference == 0:
+        str_difference = "Just Now"
+    elif difference == 1:
+        str_difference = str(difference) + " Minute Ago"
+    else:
+        str_difference = str(difference) + " Minutes Ago"
+    log.info("About to update Time Ago Display with reading from " + str_difference)
     lock.acquire(blocking=True)
+
     try:
-        now = datetime.datetime.utcnow()
-        reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
-        difference = round((now - reading_time).total_seconds()/60)
-        if difference == 0:
-            str_difference = "Just Now"
-        elif difference == 1:
-            str_difference = str(difference) + " Minute Ago"
-        else:
-            str_difference = str(difference) + " Minutes Ago"
-        log.info("About to update Time Ago Display with reading from " + str_difference)
-        
         if isNightTime():
            lcd.fill(Defaults.BLACK)
            font_color=Defaults.GREY
@@ -209,8 +211,6 @@ def TimeAgoThread():
         sleep(30)
 
 if __name__ == '__main__':      
-    pygame.init()
-    lcd=pygame.display.set_mode((480, 320))
     lock = threading.RLock()
     #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     TheReading=monitor_dexcom()
