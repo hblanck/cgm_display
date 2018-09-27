@@ -164,7 +164,6 @@ def display_reading(reading):
         return
     global pygame, lcd
     log.debug("Getting ready to display on the LCD panel")
-    #os.putenv('SDL_FBDEV', '/dev/fb1')
 
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
