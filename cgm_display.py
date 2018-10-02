@@ -40,7 +40,9 @@ global TheReading
 
 DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
 DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
-CHECK_INTERVAL = 60 * 2.5
+CHECK_INTERVAL = int(Config.get("dexcomshare", "polling_interval"))
+#CHECK_INTERVAL = 60 * 2.5
+TIME_AGO_INTERVAL = int(Config.get("dexcomshare","time_ago_interval"))
 AUTH_RETRY_DELAY_BASE = 2
 FAIL_RETRY_DELAY_BASE = 2
 MAX_AUTHFAILS = Config.get("dexcomshare", "max_auth_fails")
@@ -99,7 +101,7 @@ def get_sessionID(opts):
             opts.sessionID = res.text.strip('"')
             log.debug("Got auth token {}".format(opts.sessionID))
         else:
-            if authfails > MAX_AUTHFAILS:
+            if authfails > int(MAX_AUTHFAILS):
                 raise AuthError(res.status_code, res)
             else:
                 log.warning("Auth failed with: {}".format(res.status_code))
@@ -214,7 +216,7 @@ def TimeAgoThread():
     global TheReading
     while True:
         display_reading(TheReading)
-        sleep(30)
+        sleep(TIME_AGO_INTERVAL)
 
 if __name__ == '__main__':      
     lock = threading.RLock()
@@ -226,7 +228,7 @@ if __name__ == '__main__':
     TimeAgo = threading.Thread(target=TimeAgoThread)
     TimeAgo.setName("TimeAgoThread")
     TimeAgo.start()
-    sleep(120)
+    sleep(CHECK_INTERVAL)
 
     while True:
         i += 1
