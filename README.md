@@ -15,7 +15,7 @@ Adafruit PiTFT Plus 3.5" Touchscreen display (https://www.adafruit.com/product/2
 Hammer Header Male - Solderless Raspberry Pi Connector (https://www.adafruit.com/product/3662)
 
 # Requirements
-This is the version I developed on.  
+This is the version I developed on.  All required packages were included in the distribution below.  Except for the PiTFT install which is documented below.
 
 Raspberry Pi Version:
 
@@ -34,7 +34,7 @@ HOME_URL="http://www.raspbian.org/"
 SUPPORT_URL="http://www.raspbian.org/RaspbianForums"
 BUG_REPORT_URL="http://www.raspbian.org/RaspbianBugs"
 
-Python
+Python (Python 2 not supported)
 pi@raspberrypi:~ $ sudo python3 --version
 Python 3.5.3
 
