@@ -5,6 +5,7 @@ import configparser #Python3 version
 import datetime
 import logging
 import os
+import sys
 import threading
 import platform
 import re
@@ -35,6 +36,8 @@ log.addHandler(ch)
 Config = configparser.SafeConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
+
+log.debug("Running with command line: " + str(sys.argv))
 
 global TheReading
 
@@ -234,4 +237,4 @@ if __name__ == '__main__':
         i += 1
         TheReading=monitor_dexcom()
         log.debug("Iteration #"+str(i) + "-" + str(TheReading))
-        sleep(120)
+        sleep(CHECK_INTERVAL)
