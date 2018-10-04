@@ -13,9 +13,18 @@ import requests
 import time
 import urllib
 import urllib.parse #Python3 requires this
+import argparse
 import http_general
 from time import sleep
 from Defaults import Defaults, Error, AuthError, FetchError
+
+#Process command line arguments
+ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
+#ArgParser.add_argument("DEBUG", default=argparse.SUPPRESS)
+ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
+ArgParser.add_argument("--username", "-u", help="Dexcom Share User Name")
+ArgParser.add_argument("--password", "-p", help="Dexcom Share Password")
+args=ArgParser.parse_args()
 
 # On Raspberry Pi with LCD display only
 if  platform.platform().find("arm") >= 0:
@@ -36,13 +45,23 @@ log.addHandler(ch)
 Config = configparser.SafeConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
+if args.logging == "DEBUG":
+    log.setLevel("DEBUG")
 
 log.debug("Running with command line: " + str(sys.argv))
 
 global TheReading
 
-DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
-DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
+if args.username != None:
+    DEXCOM_ACCOUNT_NAME = args.username
+else:
+    DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
+
+if args.password != None:
+    DEXCOM_PASSWORD = args.password
+else:
+    DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
+
 CHECK_INTERVAL = int(Config.get("dexcomshare", "polling_interval"))
 #CHECK_INTERVAL = 60 * 2.5
 TIME_AGO_INTERVAL = int(Config.get("dexcomshare","time_ago_interval"))
