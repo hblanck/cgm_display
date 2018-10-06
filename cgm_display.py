@@ -229,7 +229,7 @@ def display_reading(reading):
 
         font_big = pygame.font.Font(None, 250)
         trend_index = reading["trend"]
-        if (reading["last_reading_lag"] == True) or (difference > LAST_READING_MAX_LAG):
+        if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
            str_reading = "---"
         else:
            str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
