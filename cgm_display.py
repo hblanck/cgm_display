@@ -20,10 +20,11 @@ from Defaults import Defaults, Error, AuthError, FetchError
 
 #Process command line arguments
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
-#ArgParser.add_argument("DEBUG", default=argparse.SUPPRESS)
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
 ArgParser.add_argument("--username", "-u", help="Dexcom Share User Name")
 ArgParser.add_argument("--password", "-p", help="Dexcom Share Password")
+ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Dexcom")
+ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
 args=ArgParser.parse_args()
 
 # On Raspberry Pi with LCD display only
@@ -62,9 +63,16 @@ if args.password != None:
 else:
     DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
 
-CHECK_INTERVAL = int(Config.get("dexcomshare", "polling_interval"))
-#CHECK_INTERVAL = 60 * 2.5
-TIME_AGO_INTERVAL = int(Config.get("dexcomshare","time_ago_interval"))
+if args.polling_interval != None:
+    CHECK_INTERVAL = int(args.polling_interval)
+else:
+    CHECK_INTERVAL = int(Config.get("dexcomshare", "polling_interval"))
+
+if args.time_ago_interval != None:
+    TIME_AGO_INTERVAL = int(args.time_ago_interval)
+else:
+    TIME_AGO_INTERVAL = int(Config.get("dexcomshare","time_ago_interval"))
+
 AUTH_RETRY_DELAY_BASE = 2
 FAIL_RETRY_DELAY_BASE = 2
 MAX_AUTHFAILS = Config.get("dexcomshare", "max_auth_fails")
@@ -192,6 +200,7 @@ def display_reading(reading):
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
     difference = round((now - reading_time).total_seconds()/60)
+    log.debug("Time difference since last good reading is: " + str(difference))
     if difference == 0:
         str_difference = "Just Now"
     elif difference == 1:
@@ -220,7 +229,7 @@ def display_reading(reading):
 
         font_big = pygame.font.Font(None, 250)
         trend_index = reading["trend"]
-        if reading["last_reading_lag"] == True:
+        if (reading["last_reading_lag"] == True) or (difference > LAST_READING_MAX_LAG):
            str_reading = "---"
         else:
            str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
