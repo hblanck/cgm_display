@@ -185,8 +185,11 @@ def monitor_dexcom():
         opts.sessionID = None
         raise log.warning("Cnnection Error.. sleeping for {} seconds and".format(RETRY_DELAY) + " trying again")
         time.sleep(RETRY_DELAY)
+    
+    except:
+        log.debug("Caught exception communicating with Dexcom:  Returning False")
+        return False
 
-    #time.sleep(opts.interval)
     return False
 
 def display_reading(reading):
