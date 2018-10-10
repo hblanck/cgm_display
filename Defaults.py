@@ -45,7 +45,7 @@ class Defaults:
     BLUE=(0,0,255)
 
     #Nighttime for Night Mode
-    NIGHTMODE=(22,23,24,0,1,2,3,4,5) #Hours to use Night Mode
+    NIGHTMODE=(22,23,24,0,1,2,3,4,5,6) #Hours to use Night Mode
 
 
 class Error(Exception):
