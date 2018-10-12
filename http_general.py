@@ -50,3 +50,20 @@ def fetch(opts):
             }
 
     return requests.post(url, json=body, headers=headers)
+
+def get_sessionID(opts):
+    authfails = 0
+    while not opts.sessionID:
+        res = authorize(opts)
+        if res.status_code == 200:
+            opts.sessionID = res.text.strip('"')
+#            log.debug("Got auth token {}".format(opts.sessionID))
+        else:
+            if authfails > int(MAX_AUTHFAILS):
+                raise AuthError(res.status_code, res)
+            else:
+                log.warning("Auth failed with: {}".format(res.status_code))
+                time.sleep(AUTH_RETRY_DELAY_BASE**authfails)
+                authfails += 1
+    return opts.sessionID
+

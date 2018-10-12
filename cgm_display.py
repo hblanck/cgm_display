@@ -89,9 +89,7 @@ def isNightTime():
 
 def parse_dexcom_response(ops, res):
     log.debug(res.json())
-    epochtime = int((
-                datetime.datetime.utcnow() -
-                datetime.datetime(1970, 1, 1)).total_seconds())
+    epochtime = int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
     try:
         last_reading_time = int(re.search('\d+', res.json()[0]['ST']).group())/1000
         reading_lag = epochtime - last_reading_time
@@ -123,21 +121,21 @@ def parse_dexcom_response(ops, res):
         log.error(res.__dict__)
         return None
 
-def get_sessionID(opts):
-    authfails = 0
-    while not opts.sessionID:
-        res = http_general.authorize(opts)
-        if res.status_code == 200:
-            opts.sessionID = res.text.strip('"')
-            log.debug("Got auth token {}".format(opts.sessionID))
-        else:
-            if authfails > int(MAX_AUTHFAILS):
-                raise AuthError(res.status_code, res)
-            else:
-                log.warning("Auth failed with: {}".format(res.status_code))
-                time.sleep(AUTH_RETRY_DELAY_BASE**authfails)
-                authfails += 1
-    return opts.sessionID
+# def get_sessionID(opts):
+#     authfails = 0
+#     while not opts.sessionID:
+#         res = http_general.authorize(opts)
+#         if res.status_code == 200:
+#             opts.sessionID = res.text.strip('"')
+#             log.debug("Got auth token {}".format(opts.sessionID))
+#         else:
+#             if authfails > int(MAX_AUTHFAILS):
+#                 raise AuthError(res.status_code, res)
+#             else:
+#                 log.warning("Auth failed with: {}".format(res.status_code))
+#                 time.sleep(AUTH_RETRY_DELAY_BASE**authfails)
+#                 authfails += 1
+#     return opts.sessionID
 
 def monitor_dexcom():
     """ Main loop """
@@ -150,7 +148,8 @@ def monitor_dexcom():
     #log.debug("RUNNING {}, failures: {}".format(runs, failures))
     if not opts.sessionID:
         authfails = 0
-        opts.sessionID = get_sessionID(opts)
+        opts.sessionID = http_general.get_sessionID(opts)
+        log.debug("Got auth token {}".format(opts.sessionID))
     try:
         res = http_general.fetch(opts)
         if res and res.status_code < 400:
