@@ -2,6 +2,7 @@
 
 #import ConfigParser #Python2 version
 import configparser #Python3 version
+import argparse
 import datetime
 import logging
 import os
@@ -13,7 +14,6 @@ import requests
 import time
 import urllib
 import urllib.parse #Python3 requires this
-import argparse
 import http_general
 from time import sleep
 from Defaults import Defaults, Error, AuthError, FetchError
@@ -100,9 +100,7 @@ def parse_dexcom_response(ops, res):
         trend_english=list(Defaults.DIRECTIONS.keys())[list(Defaults.DIRECTIONS.values()).index(trend)] # Python3 version
         log.info("Last bg: {}  trending: {} ({})  last reading at: {} seconds ago".format(mgdl, trend_english, trend, reading_lag))
         if reading_lag > LAST_READING_MAX_LAG:
-            log.warning(
-                "***WARN It has been {} minutes since DEXCOM got a" +
-                "new measurement".format(int(reading_lag/60)))
+            log.warning("***WARN It has been {} minutes since DEXCOM got a new measurement".format(int(reading_lag/60)))
             last_reading_lag = True
         else:
             last_reading_lag = False
@@ -121,22 +119,6 @@ def parse_dexcom_response(ops, res):
         log.error(res.__dict__)
         return None
 
-# def get_sessionID(opts):
-#     authfails = 0
-#     while not opts.sessionID:
-#         res = http_general.authorize(opts)
-#         if res.status_code == 200:
-#             opts.sessionID = res.text.strip('"')
-#             log.debug("Got auth token {}".format(opts.sessionID))
-#         else:
-#             if authfails > int(MAX_AUTHFAILS):
-#                 raise AuthError(res.status_code, res)
-#             else:
-#                 log.warning("Auth failed with: {}".format(res.status_code))
-#                 time.sleep(AUTH_RETRY_DELAY_BASE**authfails)
-#                 authfails += 1
-#     return opts.sessionID
-
 def monitor_dexcom():
     """ Main loop """
     opts = Defaults
@@ -146,11 +128,11 @@ def monitor_dexcom():
     fetchfails = 0
     failures = 0
     #log.debug("RUNNING {}, failures: {}".format(runs, failures))
-    if not opts.sessionID:
-        authfails = 0
-        opts.sessionID = http_general.get_sessionID(opts)
-        log.debug("Got auth token {}".format(opts.sessionID))
     try:
+        if not opts.sessionID:
+            authfails = 0
+            opts.sessionID = http_general.get_sessionID(opts)
+            log.debug("Got auth token {}".format(opts.sessionID))
         res = http_general.fetch(opts)
         if res and res.status_code < 400:
             fetchfails = 0
@@ -184,7 +166,9 @@ def monitor_dexcom():
         opts.sessionID = None
         raise log.warning("Cnnection Error.. sleeping for {} seconds and".format(RETRY_DELAY) + " trying again")
         time.sleep(RETRY_DELAY)
-    
+    except AuthError:
+        log.error("Authentication error connecting to Dexcom share")
+        return False
     except:
         log.debug("Caught exception communicating with Dexcom:  Returning False")
         return False
@@ -192,7 +176,7 @@ def monitor_dexcom():
     return False
 
 def display_reading(reading):
-     # On Raspberry Pi with LCD display only
+    # On Raspberry Pi with LCD display only
     if not platform.platform().find("arm") >= 0:
         log.debug("Skipping display.  Not on Raspberry Pi")
         return
@@ -254,8 +238,8 @@ def TimeAgoThread():
 if __name__ == '__main__':      
     lock = threading.RLock()
     log.debug("Created lock: " + str(lock))
-    #One initial reading to have data for the TimeAgo Thread before we get into the main loop
-    TheReading=monitor_dexcom()
+    
+    TheReading=monitor_dexcom() #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     i = 1
 
     TimeAgo = threading.Thread(target=TimeAgoThread)
