@@ -45,4 +45,5 @@ Python 3.5.3
 - To run as a foreground application "cd ~/cgm_display ; sudo python3 cgm_display.py"
 
 - To install it to run at boot up automatically add the following line to your startup script.  'sudo nano /etc/rc.local'
-sudo python3 /home/pi/cgm_display/cgm_display.py & > /var/log/cgm_display.log 2>&1
+sudo python3 /home/pi/cgm_display/cgm_display.py --username=USERNAME --password=PASSWORD --logging=INFO& > /var/log/cgm_display.log 2>&1
+ (Note: use --logging=DEBUG for debug level logging)
