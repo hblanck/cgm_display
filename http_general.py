@@ -48,8 +48,8 @@ def fetch(opts):
             'Content-Length': "0",
             'Accept': Defaults.accept
             }
-    print(headers)
-    print(url)
+    #print(headers)
+    #print(url)
     return requests.post(url, json=body, headers=headers)
 
 def get_sessionID(opts):
