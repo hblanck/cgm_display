@@ -16,7 +16,8 @@ import urllib
 import urllib.parse #Python3 requires this
 import http_general
 from time import sleep
-from Defaults import Defaults, Error, AuthError, FetchError
+#from Defaults import Defaults, Error, AuthError, FetchError
+from Defaults import Defaults
 
 #Process command line arguments
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
