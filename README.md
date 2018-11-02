@@ -14,6 +14,7 @@ Thanks to jerm's Dexcom Tools project (https://github.com/jerm/dexcom_tools) for
 - Raspberry Pi Zero W (Should work with any current Raspberry Pi Model.  I got mine from Adafruit (https://www.adafruit.com/product/3400)
 - Adafruit PiTFT Plus 3.5" Touchscreen display (https://www.adafruit.com/product/2441)
 - Hammer Header Male - Solderless Raspberry Pi Connector (https://www.adafruit.com/product/3662)
+- PiTFT Pibow+ Case - Not a perfect fit, but I made it work pretty easily. (https://www.adafruit.com/product/2779)
 - If you don't have an SD card, AC Adapter or other cables required you can pick those up on Adafruit or Amazon pretty easily too.
 
 # Requirements
