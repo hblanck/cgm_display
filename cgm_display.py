@@ -176,7 +176,9 @@ def monitor_dexcom():
 
     return False
 
-def display_reading(reading):
+def display_reading(reading, bgdelta):
+    log.debug("Displaying with Reading of " + str(reading) + " and a change of " + '{0:{1}}'.format(bgdelta, '+' if bgdelta else ''))
+    #log.debug("Differeince is " + '{0:{1}}'.format(number, '+' if number else ''))
     # On Raspberry Pi with LCD display only
     if not platform.platform().find("arm") >= 0:
         log.debug("Skipping display.  Not on Raspberry Pi")
@@ -223,6 +225,12 @@ def display_reading(reading):
         text_surface = font_big.render(str_reading, True, font_color)
         rect = text_surface.get_rect(center=(240,160))
         lcd.blit(text_surface, rect)
+        
+        font_medium = pygame.font.Font(None, 135)
+        text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
+        rect = text_surface.get_rect(center=(240, 300))
+        lcd.blit(text_surface, rect)
+        
         pygame.display.update()
         pygame.mouse.set_visible(False)
     finally:
@@ -231,15 +239,18 @@ def display_reading(reading):
         log.debug("Lock released: "+str(lock))
    
 def TimeAgoThread():
-    global TheReading
+    global TheReading, BGDifference
+    #log.debug("Differeince is " + '{0:{1}}'.format(number, '+' if number else ''))
     while True:
-        display_reading(TheReading)
+        display_reading(TheReading, BGDifference)
         sleep(TIME_AGO_INTERVAL)
 
 if __name__ == '__main__':      
     lock = threading.RLock()
     log.debug("Created lock: " + str(lock))
     
+    LastReading = 0
+    BGDifference = 0
     TheReading=monitor_dexcom() #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     i = 1
 
@@ -250,6 +261,9 @@ if __name__ == '__main__':
 
     while True:
         i += 1
+        LastReading = TheReading["bg"]
         TheReading=monitor_dexcom()
+        BGDifference = TheReading["bg"] - LastReading
         log.debug("Iteration #"+str(i) + "-" + str(TheReading))
+        log.debug("Difference of " + str(BGDifference))
         sleep(CHECK_INTERVAL)
