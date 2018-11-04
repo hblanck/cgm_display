@@ -141,7 +141,7 @@ def monitor_dexcom():
             if reading:
                 # On Raspberry Pi with LCD display only
                 if  platform.platform().find("arm") >= 0:
-                    display_reading(reading)
+                    display_reading(reading,0)
                     #sleep(180)
                 return reading
             else:
