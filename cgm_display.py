@@ -261,6 +261,7 @@ if __name__ == '__main__':
 
     while True:
         i += 1
+    
         LastReading = TheReading["bg"]
         TheReading=monitor_dexcom()
         BGDifference = TheReading["bg"] - LastReading
