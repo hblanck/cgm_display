@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #import ConfigParser #Python2 version
 import configparser #Python3 version
 import argparse
@@ -140,8 +138,8 @@ def monitor_dexcom():
             reading = parse_dexcom_response(opts, res)
             if reading:
                 # On Raspberry Pi with LCD display only
-                if  platform.platform().find("arm") >= 0:
-                    display_reading(reading,0)
+                #if  platform.platform().find("arm") >= 0:
+                #    display_reading(reading,0)
                     #sleep(180)
                 return reading
             else:
@@ -153,14 +151,15 @@ def monitor_dexcom():
             failures += 1
             opts.sessionID = None
             log.warning("Saw an error from the dexcom api, code: {}.  details to follow".format(res.status_code))
-            raise FetchError(res.status_code, res)
+            raise opts.FetchError(res.status_code, res)
             log.warning("Fetch failed on: {}".format(res.status_code))
+            return
             if fetchfails > (MAX_FETCHFAILS/2):
                 log.warning("Trying to re-auth...")
                 opts.sessionID = None
             else:
                 log.warning("Trying again...")
-            time.sleep((FAIL_RETRY_DELAY_BASE**authfails))
+            #time.sleep((FAIL_RETRY_DELAY_BASE**authfails))
             fetchfails += 1
 
     except ConnectionError:
@@ -251,6 +250,8 @@ if __name__ == '__main__':
     
     LastReading = 0
     BGDifference = 0
+    TheReading = False
+    
     TheReading=monitor_dexcom() #One initial reading to have data for the TimeAgo Thread before we get into the main loop
     i = 1
 
@@ -261,10 +262,12 @@ if __name__ == '__main__':
 
     while True:
         i += 1
-    
-        LastReading = TheReading["bg"]
-        TheReading=monitor_dexcom()
-        BGDifference = TheReading["bg"] - LastReading
-        log.debug("Iteration #"+str(i) + "-" + str(TheReading))
-        log.debug("Difference of " + str(BGDifference))
+        try:  
+            LastReading = TheReading["bg"]
+            TheReading=monitor_dexcom()
+            BGDifference = TheReading["bg"] - LastReading
+            log.debug("Iteration #"+str(i) + "-" + str(TheReading))
+            log.debug("Difference of " + str(BGDifference))
+        except:
+            log.info("Exception processing The Reading, Sleeping and trying again....")
         sleep(CHECK_INTERVAL)
