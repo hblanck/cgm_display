@@ -222,12 +222,12 @@ def display_reading(reading, bgdelta):
         else:
            str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
         text_surface = font_big.render(str_reading, True, font_color)
-        rect = text_surface.get_rect(center=(240,160))
+        rect = text_surface.get_rect(center=(240,155))
         lcd.blit(text_surface, rect)
         
         font_medium = pygame.font.Font(None, 135)
         text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
-        rect = text_surface.get_rect(center=(240, 300))
+        rect = text_surface.get_rect(center=(240, 275))
         lcd.blit(text_surface, rect)
         
         pygame.display.update()
