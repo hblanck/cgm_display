@@ -236,6 +236,7 @@ def display_reading(reading, bgdelta):
         rect = text_surface.get_rect(center=(240, 160+137))
         lcd.blit(text_surface, rect)
         
+
         pygame.display.update()
         pygame.mouse.set_visible(False)
     finally:
