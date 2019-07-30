@@ -209,6 +209,8 @@ def display_reading(reading, bgdelta):
            log.debug("Setting to Daylight mode")
            lcd.fill(Defaults.BLUE)
            font_color=Defaults.WHITE
+
+        pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
         
         font_time = pygame.font.Font(None, 37)
         text_surface = font_time.render(str_difference, True, font_color)
