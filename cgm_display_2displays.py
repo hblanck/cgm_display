@@ -210,8 +210,10 @@ def display_reading(reading, bgdelta):
            lcd.fill(Defaults.BLUE)
            font_color=Defaults.WHITE
 
+        #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
         
+        #Time Ago
         font_time = pygame.font.Font(None, 37)
         text_surface = font_time.render(str_difference, True, font_color)
         rect = text_surface.get_rect(center=(200,20))
@@ -219,6 +221,7 @@ def display_reading(reading, bgdelta):
         rect = text_surface.get_rect(center=(200,160+20))
         lcd.blit(text_surface, rect)
 
+        #Reading
         font_big = pygame.font.Font(None, 125)
         trend_index = reading["trend"]
         if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
@@ -226,16 +229,17 @@ def display_reading(reading, bgdelta):
         else:
            str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
         text_surface = font_big.render(str_reading, True, font_color)
-        rect = text_surface.get_rect(center=(100,80))
+        rect = text_surface.get_rect(center=(140,80))
         lcd.blit(text_surface, rect)
-        rect = text_surface.get_rect(center=(100,160+80))
+        rect = text_surface.get_rect(center=(140,160+80))
         lcd.blit(text_surface, rect)
-        
+
+        #Trend Number        
         font_medium = pygame.font.Font(None, 67)
         text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
-        rect = text_surface.get_rect(center=(320, 80))
+        rect = text_surface.get_rect(center=(360, 80))
         lcd.blit(text_surface, rect)
-        rect = text_surface.get_rect(center=(320, 160+80))
+        rect = text_surface.get_rect(center=(360, 160+80))
         lcd.blit(text_surface, rect)
         
 
