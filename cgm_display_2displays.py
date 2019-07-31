@@ -22,6 +22,8 @@ ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
 ArgParser.add_argument("--username", "-u", help="Dexcom Share User Name")
 ArgParser.add_argument("--password", "-p", help="Dexcom Share Password")
+ArgParser.add_argument("--username2", "-u2", help="Dexcom Share User Name 2")
+ArgParser.add_argument("--password2", "-p2", help="Dexcom Share Password 2")
 ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Dexcom")
 ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
 args=ArgParser.parse_args()
@@ -61,6 +63,17 @@ if args.password != None:
     DEXCOM_PASSWORD = args.password
 else:
     DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
+
+if args.username2 != None:
+    DEXCOM_ACCOUNT_NAME2 = args.username2
+else:
+    DEXCOM_ACCOUNT_NAME2 = Config.get("dexcomshare", "dexcom_share_login2")
+
+if args.password2 != None:
+    DEXCOM_PASSWORD2 = args.password2
+else:
+    DEXCOM_PASSWORD2 = Config.get("dexcomshare", "dexcom_share_password2")
+
 
 if args.polling_interval != None:
     CHECK_INTERVAL = int(args.polling_interval)
@@ -212,6 +225,8 @@ def display_reading(reading, bgdelta):
 
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
+        lcd.blit(pygame.image.load('Addie_Gidner.png',(20,20)))
+        lcd.blit(pygame.image.load('Nolan_Gidner.png',(300,300)))
         
         #Time Ago
         font_time = pygame.font.Font(None, 37)
