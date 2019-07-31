@@ -226,7 +226,7 @@ def display_reading(reading, bgdelta):
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
         lcd.blit(pygame.image.load('Addie_Gidner.png'),(20,20))
-        lcd.blit(pygame.image.load('Nolan_Gidner.png'),(300,300))
+        lcd.blit(pygame.image.load('Nolan_Gidner.png'),(200,200))
         
         #Time Ago
         font_time = pygame.font.Font(None, 37)
@@ -244,7 +244,7 @@ def display_reading(reading, bgdelta):
         else:
            str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
         text_surface = font_big.render(str_reading, True, font_color)
-        rect = text_surface.get_rect(center=(160,90))
+        rect = text_surface.get_rect(center=(205,90))
         lcd.blit(text_surface, rect)
         rect = text_surface.get_rect(center=(160,160+90))
         lcd.blit(text_surface, rect)
@@ -252,7 +252,7 @@ def display_reading(reading, bgdelta):
         #Trend Number        
         font_medium = pygame.font.Font(None, 67)
         text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
-        rect = text_surface.get_rect(center=(360, 90))
+        rect = text_surface.get_rect(center=(405, 90))
         lcd.blit(text_surface, rect)
         rect = text_surface.get_rect(center=(360, 160+90))
         lcd.blit(text_surface, rect)
