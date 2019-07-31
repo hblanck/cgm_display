@@ -1,5 +1,5 @@
 #import ConfigParser #Python2 version
-import configparser #Python3 version
+import configparser #Python3 version Deprecated
 import argparse
 import datetime
 import logging
@@ -44,7 +44,8 @@ ch.setFormatter(formatter)
 log.addHandler(ch)
 
 #Config = ConfigParser.SafeConfigParser()
-Config = configparser.SafeConfigParser()
+#Config = configparser.SafeConfigParser()
+Config = configparser.ConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
 if args.logging == "DEBUG":
