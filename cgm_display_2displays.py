@@ -226,8 +226,8 @@ def display_reading(reading, bgdelta):
 
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
-        lcd.blit(pygame.image.load('Addie_Gidner.png'),(20,20))
-        lcd.blit(pygame.image.load('Nolan_Gidner.png'),(200,200))
+        lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Addie_Gidner.png'),(5,5))
+        lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'),(390,165))        
         
         #Time Ago
         font_time = pygame.font.Font(None, 37)
