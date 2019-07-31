@@ -215,14 +215,18 @@ def display_reading(reading, bgdelta):
     log.debug("Acquired lock "+str(lock))
 
     try:
-        if isNightTime():
-           log.debug("Setting to Nighttime mode")
-           lcd.fill(Defaults.BLACK)
-           font_color=Defaults.GREY
-        else:
-           log.debug("Setting to Daylight mode")
-           lcd.fill(Defaults.BLUE)
-           font_color=Defaults.WHITE
+#         if isNightTime():
+#            log.debug("Setting to Nighttime mode")
+#            lcd.fill(Defaults.BLACK)
+#            font_color=Defaults.GREY
+#         else:
+#            log.debug("Setting to Daylight mode")
+#            lcd.fill(Defaults.BLUE)
+#            font_color=Defaults.WHITE
+
+        lcd.fill(Defaults.BLUE)
+        font_color=Defaults.WHITE
+
 
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
