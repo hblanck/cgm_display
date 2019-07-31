@@ -230,7 +230,7 @@ def display_reading(reading, bgdelta):
         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'),(390,165))        
         
         #Time Ago
-        font_time = pygame.font.Font(None, 37)
+        font_time = pygame.font.Font(None, 45)
         text_surface = font_time.render(str_difference, True, font_color)
         rect = text_surface.get_rect(center=(230,20))
         lcd.blit(text_surface, rect)
@@ -238,20 +238,20 @@ def display_reading(reading, bgdelta):
         lcd.blit(text_surface, rect)
 
         #Reading
-        font_big = pygame.font.Font(None, 125)
+        font_big = pygame.font.Font(None, 145)
         trend_index = reading["trend"]
         if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
            str_reading = "---"
         else:
            str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
         text_surface = font_big.render(str_reading, True, font_color)
-        rect = text_surface.get_rect(center=(205,90))
+        rect = text_surface.get_rect(center=(225,90))
         lcd.blit(text_surface, rect)
         rect = text_surface.get_rect(center=(160,160+90))
         lcd.blit(text_surface, rect)
 
         #Trend Number        
-        font_medium = pygame.font.Font(None, 67)
+        font_medium = pygame.font.Font(None, 90)
         text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
         rect = text_surface.get_rect(center=(405, 90))
         lcd.blit(text_surface, rect)
