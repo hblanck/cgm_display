@@ -86,6 +86,19 @@ if args.time_ago_interval != None:
 else:
     TIME_AGO_INTERVAL = int(Config.get("dexcomshare","time_ago_interval"))
 
+# Load up the two different user credentials
+global DexcomUser
+DexcomUser = []
+DexcomUser.append({"username" : DEXCOM_ACCOUNT_NAME,
+                   "password" : DEXCOM_PASSWORD,
+                   "session_id" : None,
+                   "image" : os.path.dirname(os.path.realpath(__file__))+"/Addie_Gidner.png"})
+
+DexcomUser.append({"username" : DEXCOM_ACCOUNT_NAME2,
+                   "password" : DEXCOM_PASSWORD2,
+                   "session_id" : None,
+                   "image" : os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'})
+
 AUTH_RETRY_DELAY_BASE = 2
 FAIL_RETRY_DELAY_BASE = 2
 MAX_AUTHFAILS = Config.get("dexcomshare", "max_auth_fails")
@@ -132,11 +145,14 @@ def parse_dexcom_response(ops, res):
         log.error(res.__dict__)
         return None
 
-def monitor_dexcom():
+def monitor_dexcom(user):
     """ Main loop """
     opts = Defaults
-    opts.accountName = os.getenv("DEXCOM_ACCOUNT_NAME", DEXCOM_ACCOUNT_NAME)
-    opts.password = os.getenv("DEXCOM_PASSWORD", DEXCOM_PASSWORD)
+    #opts.accountName = os.getenv("DEXCOM_ACCOUNT_NAME", DEXCOM_ACCOUNT_NAME)
+    #opts.password = os.getenv("DEXCOM_PASSWORD", DEXCOM_PASSWORD)
+    opts.accountName = user["username"]
+    opts.password = user["password"]
+    opts.sessionID = user["session_id"]
     opts.interval = float(os.getenv("CHECK_INTERVAL", CHECK_INTERVAL))
     fetchfails = 0
     failures = 0
@@ -145,6 +161,7 @@ def monitor_dexcom():
         if not opts.sessionID:
             authfails = 0
             opts.sessionID = http_general.get_sessionID(opts)
+            user["session_id"] = opts.sessionID
             log.debug("Got auth token {}".format(opts.sessionID))
         res = http_general.fetch(opts)
         if res and res.status_code < 400:
@@ -189,8 +206,9 @@ def monitor_dexcom():
 
     return False
 
-def display_reading(reading, bgdelta):
-    log.debug("Displaying with Reading of " + str(reading) + " and a change of " + '{0:{1}}'.format(bgdelta, '+' if bgdelta else ''))
+def display_reading(reading, bgdelta, reading2, bgdelta2):
+    log.debug("Displaying User 1 with Reading of " + str(reading) + " and a change of " + '{0:{1}}'.format(bgdelta, '+' if bgdelta else ''))
+
     #log.debug("Differeince is " + '{0:{1}}'.format(number, '+' if number else ''))
     # On Raspberry Pi with LCD display only
     if not platform.platform().find("arm") >= 0:
@@ -201,7 +219,9 @@ def display_reading(reading, bgdelta):
 
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
+    reading_time2 = datetime.datetime.utcfromtimestamp(reading2["last_reading_time"])
     difference = round((now - reading_time).total_seconds()/60)
+    difference2 = round((now - reading_time).total_seconds()/60)
     log.debug("Time difference since last good reading is: " + str(difference))
     if difference == 0:
         str_difference = "Just Now"
@@ -209,7 +229,15 @@ def display_reading(reading, bgdelta):
         str_difference = str(difference) + " Minute Ago"
     else:
         str_difference = str(difference) + " Minutes Ago"
-    log.info("About to update Time Ago Display with reading from " + str_difference)
+    log.debug("Time difference since last good reading2 is: " + str(difference2))
+    if difference2 == 0:
+        str_difference2 = "Just Now"
+    elif difference2 == 1:
+        str_difference2 = str(difference2) + " Minute Ago"
+    else:
+        str_difference2 = str(difference2) + " Minutes Ago"
+
+    log.info("About to update Time Ago Display with reading from " + str_difference + " and " + str_difference2)
     log.debug("About to acquire lock with: "+str(lock))
     lock.acquire(blocking=True)
     log.debug("Acquired lock "+str(lock))
@@ -230,14 +258,18 @@ def display_reading(reading, bgdelta):
 
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
-        lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Addie_Gidner.png'),(5,5))
-        lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'),(390,165))        
+#         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Addie_Gidner.png'),(5,5))
+#         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'),(390,165))        
+        lcd.blit(pygame.image.load(DexcomUser[0]["image"]),(5,5))
+        lcd.blit(pygame.image.load(DexcomUser[1]["image"]),(390,165))        
+
         
         #Time Ago
         font_time = pygame.font.Font(None, 45)
         text_surface = font_time.render(str_difference, True, font_color)
         rect = text_surface.get_rect(center=(230,20))
         lcd.blit(text_surface, rect)
+        text_surface = font_time.render(str_difference2, True, font_color)
         rect = text_surface.get_rect(center=(230,160+20))
         lcd.blit(text_surface, rect)
 
@@ -251,6 +283,12 @@ def display_reading(reading, bgdelta):
         text_surface = font_big.render(str_reading, True, font_color)
         rect = text_surface.get_rect(center=(225,90))
         lcd.blit(text_surface, rect)
+        trend_index = reading2["trend"]
+        if (reading2["last_reading_lag"] == True) or (difference2 > round(LAST_READING_MAX_LAG/60)):
+           str_reading2 = "---"
+        else:
+           str_reading2 = str(reading2["bg"])+Defaults.ARROWS[str(trend_index)]
+        text_surface = font_big.render(str_reading2, True, font_color)
         rect = text_surface.get_rect(center=(160,160+90))
         lcd.blit(text_surface, rect)
 
@@ -259,6 +297,7 @@ def display_reading(reading, bgdelta):
         text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
         rect = text_surface.get_rect(center=(405, 90))
         lcd.blit(text_surface, rect)
+        text_surface = font_medium.render('{0:{1}}'.format(bgdelta2, '+' if bgdelta2 else ''),True,font_color)
         rect = text_surface.get_rect(center=(360, 160+90))
         lcd.blit(text_surface, rect)
         
@@ -274,7 +313,7 @@ def TimeAgoThread():
     global TheReading, BGDifference
     #log.debug("Differeince is " + '{0:{1}}'.format(number, '+' if number else ''))
     while True:
-        display_reading(TheReading, BGDifference)
+        display_reading(TheReading, BGDifference,TheReading2, BGDifference2)
         sleep(TIME_AGO_INTERVAL)
 
 if __name__ == '__main__':      
@@ -284,8 +323,12 @@ if __name__ == '__main__':
     LastReading = 0
     BGDifference = 0
     TheReading = False
+    LastReading2 = 0
+    BGDifference2 = 0
+    TheReading2 = False
     
-    TheReading=monitor_dexcom() #One initial reading to have data for the TimeAgo Thread before we get into the main loop
+    TheReading=monitor_dexcom(DexcomUser[0]) #One initial reading to have data for the TimeAgo Thread before we get into the main loop
+    TheReading2=monitor_dexcom(DexcomUser[1])
     i = 1
 
     TimeAgo = threading.Thread(target=TimeAgoThread)
@@ -296,11 +339,16 @@ if __name__ == '__main__':
     while True:
         i += 1
         try:  
-            LastReading = TheReading["bg"]
-            TheReading=monitor_dexcom()
-            BGDifference = TheReading["bg"] - LastReading
             log.debug("Iteration #"+str(i) + "-" + str(TheReading))
-            log.debug("Difference of " + str(BGDifference))
+            LastReading = TheReading["bg"]
+            TheReading=monitor_dexcom(DexcomUser[0])
+            BGDifference = TheReading["bg"] - LastReading
+            log.debug("User 1 Difference of " + str(BGDifference))
+
+            LastReading2 = TheReading2["bg"]
+            TheReading2=monitor_dexcom(DexcomUser[1])
+            BGDifference2 = TheReading2["bg"] - LastReading2
+            log.debug("User 2 Difference of " + str(BGDifference2))
         except:
             log.info("Exception processing The Reading, Sleeping and trying again....")
         sleep(CHECK_INTERVAL)
