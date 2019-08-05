@@ -221,7 +221,7 @@ def display_reading(reading, bgdelta, reading2, bgdelta2):
     reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
     reading_time2 = datetime.datetime.utcfromtimestamp(reading2["last_reading_time"])
     difference = round((now - reading_time).total_seconds()/60)
-    difference2 = round((now - reading_time).total_seconds()/60)
+    difference2 = round((now - reading_time2).total_seconds()/60)
     log.debug("Time difference since last good reading is: " + str(difference))
     if difference == 0:
         str_difference = "Just Now"
