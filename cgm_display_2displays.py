@@ -181,6 +181,7 @@ def monitor_dexcom(user):
         else:
             failures += 1
             opts.sessionID = None
+            user["session_id"] = None
             log.warning("Saw an error from the dexcom api, code: {}.  details to follow".format(res.status_code))
             raise opts.FetchError(res.status_code, res)
             log.warning("Fetch failed on: {}".format(res.status_code))
