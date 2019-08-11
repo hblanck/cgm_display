@@ -22,8 +22,10 @@ ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
 ArgParser.add_argument("--username", "-u", help="Dexcom Share User Name")
 ArgParser.add_argument("--password", "-p", help="Dexcom Share Password")
+ArgParser.add_argument("--image", "-i", help="Image file for first person")
 ArgParser.add_argument("--username2", "-u2", help="Dexcom Share User Name 2")
 ArgParser.add_argument("--password2", "-p2", help="Dexcom Share Password 2")
+ArgParser.add_argument("--image2", "-i2", help="Image file for second person")
 ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Dexcom")
 ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
 args=ArgParser.parse_args()
@@ -65,6 +67,11 @@ if args.password != None:
 else:
     DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
 
+if args.image != None:
+    IMAGE_FILE = args.image
+else:
+    IMAGE_FILE = Config.get("dexcomshare", "image_file")
+
 if args.username2 != None:
     DEXCOM_ACCOUNT_NAME2 = args.username2
 else:
@@ -75,6 +82,10 @@ if args.password2 != None:
 else:
     DEXCOM_PASSWORD2 = Config.get("dexcomshare", "dexcom_share_password2")
 
+if args.image2 != None:
+    IMAGE_FILE2 = args.image2
+else:
+    IMAGE_FILE2 = Config.get("dexcomshare", "image_file2")
 
 if args.polling_interval != None:
     CHECK_INTERVAL = int(args.polling_interval)
@@ -92,12 +103,12 @@ DexcomUser = []
 DexcomUser.append({"username" : DEXCOM_ACCOUNT_NAME,
                    "password" : DEXCOM_PASSWORD,
                    "session_id" : None,
-                   "image" : os.path.dirname(os.path.realpath(__file__))+"/Addie_Gidner.png"})
+                   "image" : os.path.dirname(os.path.realpath(__file__))+"/"+IMAGE_FILE})
 
 DexcomUser.append({"username" : DEXCOM_ACCOUNT_NAME2,
                    "password" : DEXCOM_PASSWORD2,
                    "session_id" : None,
-                   "image" : os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'})
+                   "image" : os.path.dirname(os.path.realpath(__file__))+"/"+IMAGE_FILE2})
 
 AUTH_RETRY_DELAY_BASE = 2
 FAIL_RETRY_DELAY_BASE = 2
@@ -256,14 +267,12 @@ def display_reading(reading, bgdelta, reading2, bgdelta2):
         lcd.fill(Defaults.BLUE)
         font_color=Defaults.WHITE
 
-
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
 #         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Addie_Gidner.png'),(5,5))
 #         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'),(390,165))        
         lcd.blit(pygame.image.load(DexcomUser[0]["image"]),(5,5))
         lcd.blit(pygame.image.load(DexcomUser[1]["image"]),(390,165))        
-
         
         #Time Ago
         font_time = pygame.font.Font(None, 45)
@@ -301,7 +310,6 @@ def display_reading(reading, bgdelta, reading2, bgdelta2):
         text_surface = font_medium.render('{0:{1}}'.format(bgdelta2, '+' if bgdelta2 else ''),True,font_color)
         rect = text_surface.get_rect(center=(360, 160+90))
         lcd.blit(text_surface, rect)
-        
 
         pygame.display.update()
         pygame.mouse.set_visible(False)
