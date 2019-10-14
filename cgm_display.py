@@ -262,10 +262,12 @@ if __name__ == '__main__':
 
     while True:
         i += 1
-        try:  
+        try:
             LastReading = TheReading["bg"]
+            LastReadingTime = TheReading["last_reading_time"]
             TheReading=monitor_dexcom()
-            BGDifference = TheReading["bg"] - LastReading
+            if (TheReading["last_reading_time"] != LastReadingTime):
+                BGDifference = TheReading["bg"] - LastReading
             log.debug("Iteration #"+str(i) + "-" + str(TheReading))
             log.debug("Difference of " + str(BGDifference))
         except:
