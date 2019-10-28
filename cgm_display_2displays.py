@@ -255,6 +255,7 @@ def display_reading(reading, bgdelta, reading2, bgdelta2):
     log.debug("Acquired lock "+str(lock))
 
     try:
+# We're not using Night mode for the dual display.
 #         if isNightTime():
 #            log.debug("Setting to Nighttime mode")
 #            lcd.fill(Defaults.BLACK)
@@ -269,8 +270,8 @@ def display_reading(reading, bgdelta, reading2, bgdelta2):
 
         #Lower rectangle
         pygame.draw.rect(lcd,(255,0,0),(0,161,480,160))
-#         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Addie_Gidner.png'),(5,5))
-#         lcd.blit(pygame.image.load(os.path.dirname(os.path.realpath(__file__))+'/Nolan_Gidner.png'),(390,165))        
+
+        # Display the images
         lcd.blit(pygame.image.load(DexcomUser[0]["image"]),(5,5))
         lcd.blit(pygame.image.load(DexcomUser[1]["image"]),(390,165))        
         
