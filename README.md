@@ -3,7 +3,7 @@ CGM Display Project
 
 Always on CGM Display.  Designed for Raspberry Pi using Adafruit's PiTFT Plus 3.5" display (parts list I used below).
 This depends on Dexcom CGM data from the Dexcom server.
-![Alt text](IMG_5750.png?raw=true "CGM Display")
+![Alt text](IMG_0440.jpeg?raw=true "CGM Display")
 
 # Credits
 
