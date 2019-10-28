@@ -16,6 +16,7 @@ Thanks to jerm's Dexcom Tools project (https://github.com/jerm/dexcom_tools) for
 - Hammer Header Male - Solderless Raspberry Pi Connector (https://www.adafruit.com/product/3662)
 - PiTFT Pibow+ Case (Optional) - Not a perfect fit, but I made it work pretty easily. (https://www.adafruit.com/product/2779)
 - If you don't have an SD card, AC Adapter or other cables required you can pick those up on Adafruit or Amazon pretty easily too.
+NOTE:  I've also had success with one other LCD display.  The setup and configuration was a bit different.  This should work with any compatible display.  So feel free to experiment and let me know your results.
 
 # Requirements
 This is the version I developed on.  All required packages were included in the distribution below.  Except for the PiTFT install which is documented below.
