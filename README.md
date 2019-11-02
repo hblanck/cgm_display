@@ -9,6 +9,15 @@ This depends on Dexcom CGM data from the Dexcom server.
 
 Thanks to jerm's Dexcom Tools project (https://github.com/jerm/dexcom_tools) for the core code used here.
 
+# Features
+- Always on Display
+- Configurable Polling interval for how often you check for updates from Dexcom
+- Configurable Display refersh interval (time ago).
+- Nightmode.  Between 10pm and 7am the display uses lighter gray colors instead of high contrast white on blue.
+
+# Not Features
+- No visual or audio alerts.  No plans to add these features which already exist in Dexcom and other apps.
+
 # Parts List
 
 - Raspberry Pi Zero W.  I got mine from Adafruit (https://www.adafruit.com/product/3400).  I chose the Pi Zero W because it is cheaper.  But this also works well, and you'll find the cases to fit better with the standard Pi 3.  If you are not comfortable with attaching the header for the GPIO pins, then I'd go with the standard Pi.
