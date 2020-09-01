@@ -16,6 +16,7 @@ class Defaults:
         "DoubleUp": 1,
         "SingleUp": 2,
         "FortyFiveUp": 3,
+        "FORTY_FIVE_UP": 3,
         "Flat": 4,
         "FortyFiveDown": 5,
         "SingleDown": 6,
