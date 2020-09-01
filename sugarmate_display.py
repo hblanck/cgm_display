@@ -1,3 +1,8 @@
+##Get CGM information from our Sugarmate Account
+##When Dexcom login isn't working
+##Need to enable API access through the Sugarmate app
+##
+
 import os
 import sys
 import platform
