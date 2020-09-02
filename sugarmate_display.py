@@ -9,6 +9,7 @@ import platform
 from time import sleep
 import datetime
 import logging
+import threading
 import urllib
 import urllib.parse #Python3 requires this
 import requests
@@ -37,28 +38,27 @@ def isNightTime():
     else:
         return False
 
-
 def display_reading(reading):
-    #print("display_reading")
-    #print(reading)
-    log.debug("Displaying with Reading of " + str(reading))
+
     if not platform.platform().find("arm") >= 0:
         log.debug("Skipping display.  Not on Raspberry Pi")
         return
     global pygame, lcd
     log.debug("Getting ready to display on the LCD panel")
-    #now = datetime.datetime.utcnow()
-    #reading_time = datetime.datetime.utcfromtimestamp(reading["timestamp"])
-    #difference = round((now - reading_time).total_seconds()/60)
-    #log.debug("Time difference since last good reading is: " + str(difference))
-    #print("Time difference since last good reading is: " + str(difference))
-    #if difference == 0:
-    #    str_difference = "Just Now"
-    #elif difference == 1:
-    #    str_difference = str(difference) + " Minute Ago"
-    #else:
-    #    str_difference = str(difference) + " Minutes Ago"
-    #log.info("About to update Time Ago Display with reading from " + str_difference)
+
+    log.debug("Displaying with Reading of " + str(reading))
+    now = datetime.datetime.utcnow()
+    reading_time = datetime.datetime.utcfromtimestamp(reading["x"]) # Sugarmate puts the posix timstamp in the 'x' attribute
+    difference = round((now - reading_time).total_seconds()/60)
+    log.debug("Time difference since last good reading is: " + str(difference))
+    print("Time difference since last good reading is: " + str(difference))
+    if difference == 0:
+        str_difference = "Just Now"
+    elif difference == 1:
+        str_difference = str(difference) + " Minute Ago"
+    else:
+        str_difference = str(difference) + " Minutes Ago"
+    log.info("About to update Time Ago Display with reading from " + str_difference)
     #log.debug("About to acquire lock with: "+str(lock))
     #lock.acquire(blocking=True)
     #log.debug("Acquired lock "+str(lock))
@@ -72,12 +72,10 @@ def display_reading(reading):
            log.debug("Setting to Daylight mode")
            lcd.fill(Defaults.BLUE)
            font_color=Defaults.WHITE
-        #log.debug("Setting to Daylight mode")
-        #lcd.fill(Defaults.BLUE)
-        #font_color=Defaults.WHITE
+
         font_time = pygame.font.Font(None, 75)
-        #text_surface = font_time.render(str_difference, True, font_color)
-        text_surface = font_time.render(reading["time"], True, font_color)
+        text_surface = font_time.render(str_difference, True, font_color)
+        #text_surface = font_time.render(reading["time"], True, font_color)
         rect = text_surface.get_rect(center=(240,20))
         lcd.blit(text_surface, rect)
 
@@ -88,7 +86,6 @@ def display_reading(reading):
         #else:
             #str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
         str_reading = reading["reading"].split()[0] + " " + reading["reading"].split()[1]
-        #str_reading = "100"
         log.debug("About to push: " + str_reading + " to the display")
         text_surface = font_big.render(str_reading, True, font_color)
         rect = text_surface.get_rect(center=(240,155))
@@ -118,7 +115,7 @@ while True:
         log.info("Getting Reading from Sugarmate - Loop #" + str(i))
         r=requests.get("https://sugarmate.io/api/v1/rva9fb/latest.json")
         log.info("Got Status Code: " + str(r.status_code))
-        log.info("Data: \n" + str(r.json()))
+        log.info("Data: " + str(r.json()))
         j=r.json()
         display_reading(j)
 
