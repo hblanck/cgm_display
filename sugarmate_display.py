@@ -85,7 +85,7 @@ def display_reading(reading):
             #str_reading = "---"
         #else:
             #str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
-        str_reading = reading["reading"].split()[0] + " " + reading["reading"].split()[1]
+        str_reading = reading["reading"].split()[0] + reading["reading"].split()[1]
         log.debug("About to push: " + str_reading + " to the display")
         text_surface = font_big.render(str_reading, True, font_color)
         rect = text_surface.get_rect(center=(240,155))
