@@ -7,6 +7,7 @@ import os
 import sys
 import platform
 from time import sleep
+import argparse
 import datetime
 import logging
 import threading
@@ -15,6 +16,28 @@ import urllib.parse #Python3 requires this
 import requests
 import json
 from Defaults import Defaults
+
+#Process command line arguments
+ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
+ArgParser.add_argument("--apikey", '-a', default="XXXX", help="Set your Sugarmate API Key (6 digit code from your Sugarmate Account)")
+ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Sugarmate")
+ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
+args=ArgParser.parse_args()
+
+if args.apikey != None:
+    API_KEY = args.apikey
+else:
+    API_KEY = "XXXXXX"
+
+if args.polling_interval != None:
+    CHECK_INTERVAL = int(args.polling_interval)
+else:
+    CHECK_INTERVAL = 60
+
+if args.time_ago_interval != None:
+    TIME_AGO_INTERVAL = int(args.time_ago_interval)
+else:
+    TIME_AGO_INTERVAL = 30
 
 log = logging.getLogger(__file__)
 log.setLevel(logging.INFO)
@@ -122,7 +145,7 @@ while True:
     i += 1
     try:
         log.info("Getting Reading from Sugarmate - Loop #" + str(i))
-        r=requests.get("https://sugarmate.io/api/v1/XXXXX/latest.json")
+        r=requests.get("https://sugarmate.io/api/v1/"+API_KEY+"/latest.json")
         log.info("Got Status Code: " + str(r.status_code))
         log.info("Data: " + str(r.json()))
         j=r.json()
@@ -131,4 +154,4 @@ while True:
     except Exception as e:
         log.info("Exception processing The Reading, Sleeping and trying again....")
         log.info(e)
-    sleep(30)
+    sleep(CHECK_INTERVAL)
