@@ -17,9 +17,16 @@ import requests
 import json
 from Defaults import Defaults
 
+log = logging.getLogger(__file__)
+log.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+log.addHandler(ch)
+
 #Process command line arguments
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
-ArgParser.add_argument("--apikey", '-a', default="XXXX", help="Set your Sugarmate API Key (6 digit code from your Sugarmate Account)")
+ArgParser.add_argument("--apikey", '-a', help="Set your Sugarmate API Key (6 digit code from your Sugarmate Account)")
 ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Sugarmate")
 ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
 args=ArgParser.parse_args()
@@ -27,7 +34,7 @@ args=ArgParser.parse_args()
 if args.apikey != None:
     API_KEY = args.apikey
 else:
-    API_KEY = "XXXXXX"
+    sys.exit("No Sugarmate API key defined.  Exiting")
 
 if args.polling_interval != None:
     CHECK_INTERVAL = int(args.polling_interval)
@@ -38,13 +45,6 @@ if args.time_ago_interval != None:
     TIME_AGO_INTERVAL = int(args.time_ago_interval)
 else:
     TIME_AGO_INTERVAL = 30
-
-log = logging.getLogger(__file__)
-log.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-log.addHandler(ch)
 
 if  platform.platform().find("arm") >= 0:
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -82,9 +82,6 @@ def display_reading(reading):
     else:
         str_difference = str(difference) + " Minutes Ago"
     log.info("About to update Time Ago Display with reading from " + str_difference)
-    #log.debug("About to acquire lock with: "+str(lock))
-    #lock.acquire(blocking=True)
-    #log.debug("Acquired lock "+str(lock))
 
     try:
         if isNightTime():
@@ -98,17 +95,10 @@ def display_reading(reading):
 
         font_time = pygame.font.Font(None, 75)
         text_surface = font_time.render(str_difference, True, font_color)
-        #text_surface = font_time.render(reading["time"], True, font_color)
         rect = text_surface.get_rect(center=(240,20))
         lcd.blit(text_surface, rect)
 
-        #font_big = pygame.font.Font(None, 250)
         font_big = pygame.font.SysFont("dejavusans", 200)
-        #trend_index = reading["trend"]
-        #if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
-            #str_reading = "---"
-        #else:
-            #str_reading = str(reading["bg"])+Defaults.ARROWS[str(trend_index)]
 
         if reading["trend_words"] == "DOUBLE_UP":
             trend_arrow = chr(int("0x21D1",16))
@@ -116,7 +106,6 @@ def display_reading(reading):
             trend_arrow = chr(int("0x21D3",16))
         else:
             trend_arrow = reading["reading"].split()[1]
-        #str_reading = reading["reading"].split()[0] + reading["reading"].split()[1]
         str_reading = reading["reading"].split()[0] + trend_arrow
         log.debug("About to push: " + str_reading + " to the display")
         text_surface = font_big.render(str_reading, True, font_color)
@@ -124,9 +113,6 @@ def display_reading(reading):
         lcd.blit(text_surface, rect)
 
         font_medium = pygame.font.Font(None, 135)
-        #text_surface = font_medium.render('{0:{1}}'.format(bgdelta, '+' if bgdelta else ''),True,font_color)
-        #print("About to push: " + str(reading["delta"]) + " to the display")
-        #text_surface = font_medium.render('{0:{1}}'.format(reading["delta"], '+' if bgdelta else ''),True,font_color)
         text_surface = font_medium.render(reading["reading"].split()[2],True,font_color)
         rect = text_surface.get_rect(center=(240, 275))
         lcd.blit(text_surface, rect)
@@ -135,9 +121,6 @@ def display_reading(reading):
         pygame.display.update()
         pygame.mouse.set_visible(False)
     finally:
-        #log.debug("About to release lock: "+str(lock))
-        #lock.release()
-        #log.debug("Lock released: "+str(lock))
         log.debug("Done with display")
 
 i=0
