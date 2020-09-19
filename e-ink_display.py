@@ -13,6 +13,7 @@ import datetime
 import requests
 import json
 import logging
+from pathlib import Path
 
 log = logging.getLogger(__file__)
 log.setLevel(logging.ERROR)
@@ -44,8 +45,8 @@ else:
     TIME_AGO_INTERVAL = 30
 
 #sys.path.append("./lib") #This assumes you have placed the waveshare_epd libraries in ./lib (subdirectory of where this file is)
-log.info("The path is: " + Path().absolute())
-sys.path.append(Path().absolute()+"/lib")
+log.debug("The path is: " + str(Path(__file__).parent.absolute())+"/lib")
+sys.path.append(str(Path(__file__).parent.absolute())+"/lib")
 font_file="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 _font_s = 20
 _font_m = 45
