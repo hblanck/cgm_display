@@ -18,9 +18,9 @@ Thanks to jerm's Dexcom Tools project (https://github.com/jerm/dexcom_tools) for
 - Nightmode.  Between 10pm and 7am the display uses lighter gray colors instead of high contrast white on blue.
 
 # Updated Features - 9/19/20
-- Finally fixed the display of double-up and double-down arrows.  Using full utf-8 character set font (dejavusans) on all displays for sugarmate_display.py and e-ink_display.py.  TBD on cgm_display.py
 - Added beta support for an e-ink display (Only one specific display currently supported, see e-ink_display.py for details)
 - Added support for getting CGM data from Sugarmate instead of directly from Dexcom share servers (due to some recent changes and issues with Dexcom servers).  You will need your unique Sugarmate JSON API key.  If you are a Sugarmate user, go to https://sugarmate.io from a browser (not the mobile or desktop apps), log into your account, and under settings the 'External JSON' information will be at the bottom of the page.  The six character identifier will be passed into the application per the documentation.  This hasn't been merged into the main code yet.  Use 'sugarmate_display.py' to enable this.
+- Finally fixed the display of double-up and double-down arrows.  Using full utf-8 character set font (dejavusans) on all displays for sugarmate_display.py and e-ink_display.py.  TBD on cgm_display.py
 
 # Not Features
 - No visual or audio alerts.  No plans to add these features which already exist in Dexcom and other apps.
