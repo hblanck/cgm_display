@@ -12,6 +12,14 @@ import time
 import datetime
 import requests
 import json
+import logging
+
+log = logging.getLogger(__file__)
+log.setLevel(logging.ERROR)
+formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+log.addHandler(ch)
 
 #Process command line arguments
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
@@ -35,7 +43,9 @@ if args.time_ago_interval != None:
 else:
     TIME_AGO_INTERVAL = 30
 
-sys.path.append("./lib") #This assumes you have placed the waveshare_epd libraries in ./lib (subdirectory of where this file is)
+#sys.path.append("./lib") #This assumes you have placed the waveshare_epd libraries in ./lib (subdirectory of where this file is)
+log.info("The path is: " + Path().absolute())
+sys.path.append(Path().absolute()+"/lib")
 font_file="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 _font_s = 20
 _font_m = 45
