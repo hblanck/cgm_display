@@ -5,6 +5,7 @@ Always on CGM Display.  Designed for Raspberry Pi using Adafruit's PiTFT Plus 3.
 This depends on Dexcom CGM data from the Dexcom server or from an active Sugarmate account using the Sugarmate API.
 
 ![Alt text](IMG_0440.jpeg?raw=true "CGM Display")
+![Alt text](IMG_2247.jpeg?raw=true "e-Ink Display")
 
 # Credits
 
