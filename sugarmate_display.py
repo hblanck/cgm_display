@@ -122,6 +122,36 @@ def display_reading(reading):
     finally:
         log.debug("Done with display")
 
+def no_connection():
+
+    log.info("Displaying connection failure")
+    if not platform.platform().find("arm") >= 0:
+        log.debug("Skipping display.  Not on Raspberry Pi")
+        return
+    global pygame, lcd
+
+    now = datetime.datetime.utcnow()
+    try:
+        if isNightTime():
+           log.debug("Setting to Nighttime mode")
+           lcd.fill(Defaults.BLACK)
+           font_color=Defaults.GREY
+        else:
+           log.debug("Setting to Daylight mode")
+           lcd.fill(Defaults.BLUE)
+           font_color=Defaults.WHITE
+
+        font_big = pygame.font.SysFont("dejavusans", 150)
+        text_surface = font_big.render("net failure", True, font_color)
+        rect = text_surface.get_rect(center=(240,155))
+        lcd.blit(text_surface, rect)
+
+        log.debug("About to update the LCD display")
+        pygame.display.update()
+        pygame.mouse.set_visible(False)
+    finally:
+        log.debug("Done with display")
+
 i=0
 while True:
     i += 1
@@ -136,4 +166,5 @@ while True:
     except Exception as e:
         log.info("Exception processing The Reading, Sleeping and trying again....")
         log.info(e)
+        no_connection()
     sleep(CHECK_INTERVAL)
