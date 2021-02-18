@@ -63,7 +63,7 @@ Add the following line: "sudo python3 /home/pi/cgm_display/cgm_display.py --user
 - Same as above for PiTFT LCD Display
 - Modiy /etc/rc.local to start the sugarmate_display.py application
 - "sudo nano /etc/rc.local"
-- The execution line should say "sudo python3 /home/pic/cgm_display/sugarmate_display.py --apikey [your sugarmate api key] --polling_interval 30 > /var/log/sugarmate_display.log 2>%1 &"
+- The execution line should say "sudo python3 /home/pi/cgm_display/sugarmate_display.py --apikey [your sugarmate api key] --polling_interval 30 > /var/log/sugarmate_display.log 2>%1 &"
 
 # Sugarmate with e-Ink display version (this won't fetch data directly from Dexcom)
 - First we will need to download the e-ink drivers from waveshare.  From the pi home directoy "git clone https://github.com/waveshare/e-Paper"
