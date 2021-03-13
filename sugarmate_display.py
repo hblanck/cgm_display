@@ -125,6 +125,9 @@ def display_reading(reading):
         log.debug("About to update the LCD display")
         pygame.display.update()
         pygame.mouse.set_visible(False)
+    except Exception as e:
+        log.info("Caught an Exception processing the display")
+        log.info(e)
     finally:
         log.debug("Done with display")
 
