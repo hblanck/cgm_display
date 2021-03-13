@@ -118,7 +118,10 @@ def display_reading(reading):
         lcd.blit(text_surface, rect)
 
         font_medium = pygame.font.Font(None, 135)
-        text_surface = font_medium.render(reading["reading"].split()[2],True,font_color)
+        if len(reading["reading"].split()) > 2:
+            text_surface = font_medium.render(reading["reading"].split()[2],True,font_color)
+        else:
+            text_surface = font_medium.render("--",True,font_color)
         rect = text_surface.get_rect(center=(240, 275))
         lcd.blit(text_surface, rect)
 
@@ -140,6 +143,8 @@ while True:
         log.info("Got Status Code: " + str(r.status_code))
         log.info("Data: " + str(r.json()))
         j=r.json()
+        log.debug("Testing split handling - reading=" + j["reading"])
+        log.debug("Testing split handling - reading.split()" + j["reading"].split()[2])
         display_reading(j)
 
     except Exception as e:
