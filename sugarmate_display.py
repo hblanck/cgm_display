@@ -17,19 +17,22 @@ import requests
 import json
 from Defaults import Defaults
 
+#Process command line arguments
+ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
+ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
+ArgParser.add_argument("--apikey", '-a', help="Set your Sugarmate API Key (6 digit code from your Sugarmate Account)")
+ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Sugarmate")
+ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
+args=ArgParser.parse_args()
+
 log = logging.getLogger(__file__)
 log.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 ch.setFormatter(formatter)
 log.addHandler(ch)
-
-#Process command line arguments
-ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
-ArgParser.add_argument("--apikey", '-a', help="Set your Sugarmate API Key (6 digit code from your Sugarmate Account)")
-ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Sugarmate")
-ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
-args=ArgParser.parse_args()
+if args.logging == "DEBUG":
+    log.setLevel(logging.DEBUG)
 
 if args.apikey != None:
     API_KEY = args.apikey
@@ -74,7 +77,7 @@ def display_reading(reading):
     reading_time = datetime.datetime.utcfromtimestamp(reading["x"]) # Sugarmate puts the posix timstamp in the 'x' attribute
     difference = round((now - reading_time).total_seconds()/60)
     log.debug("Time difference since last good reading is: " + str(difference))
-    print("Time difference since last good reading is: " + str(difference))
+    #print("Time difference since last good reading is: " + str(difference))
     if difference == 0:
         str_difference = "Just Now"
     elif difference == 1:
@@ -93,11 +96,13 @@ def display_reading(reading):
            lcd.fill(Defaults.BLUE)
            font_color=Defaults.WHITE
 
+        log.debug("Setting up Difference Display")
         font_time = pygame.font.Font(None, 75)
         text_surface = font_time.render(str_difference, True, font_color)
         rect = text_surface.get_rect(center=(240,20))
         lcd.blit(text_surface, rect)
 
+        log.debug("Setting up Reading Display")
         font_big = pygame.font.SysFont("dejavusans", 200)
 
         if reading["trend_words"] == "DOUBLE_UP":
