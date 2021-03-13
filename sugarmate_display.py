@@ -143,8 +143,6 @@ while True:
         log.info("Got Status Code: " + str(r.status_code))
         log.info("Data: " + str(r.json()))
         j=r.json()
-        log.debug("Testing split handling - reading=" + j["reading"])
-        log.debug("Testing split handling - reading.split()" + j["reading"].split()[2])
         display_reading(j)
 
     except Exception as e:
