@@ -215,7 +215,7 @@ def display_reading(reading, bgdelta):
         rect = text_surface.get_rect(center=(240,20))
         lcd.blit(text_surface, rect)
 
-        font_big = pygame.font.Font(None, 250)
+        font_big = pygame.font.Font("dejavusans", 200)
         trend_index = reading["trend"]
         if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
            str_reading = "---"
