@@ -65,7 +65,12 @@ def isNightTime():
     else:
         return False
 
-def display_reading(reading, last_reading):
+def display_reading(readings):
+
+    reading=readings[0] #Current Reading
+    last_reading=readings[1] #Previous reading
+    log.debug("Current Reading: " + str(readings[0]))
+    log.debug("Previous Reading: " + str(readings[1]))
 
     display = True
     if not platform.platform().find("arm") >= 0:
@@ -95,14 +100,11 @@ def display_reading(reading, last_reading):
     trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
     log.debug("The arrow direction is: " + trend_arrow)
 
-    # if reading["direction"] == "DoubleUp":
-    #     trend_arrow = chr(int("0x21D1",16))
-    # elif reading["direction"] == "DoubleDown":
-    #     trend_arrow = chr(int("0x21D3",16))
-    # else:
-    #     trend_arrow = reading["reading"].split()[1]
     str_reading = str(reading["sgv"]) + trend_arrow
     log.debug("About to push: " + str_reading + " to the display")
+
+    change = reading["sgv"] - last_reading["sgv"]
+    log.debug("Change from last reading is: " + str(change))
 
     try:        
         if display:
@@ -128,14 +130,10 @@ def display_reading(reading, last_reading):
             rect = text_surface.get_rect(center=(240,155))
             lcd.blit(text_surface, rect)
 
-            #TODO -Logic for handling difference from last reading    
-            # font_medium = pygame.font.Font(None, 135)
-            # if len(reading["reading"].split()) > 2:
-            #     text_surface = font_medium.render(reading["reading"].split()[2],True,font_color)
-            # else:
-            #     text_surface = font_medium.render("--",True,font_color)
-            # rect = text_surface.get_rect(center=(240, 275))
-            # lcd.blit(text_surface, rect)
+            font_medium = pygame.font.Font(None, 135)
+            text_surface = font_medium.render(str(change),True,font_color)
+            rect = text_surface.get_rect(center=(240, 275))
+            lcd.blit(text_surface, rect)
     
             log.debug("About to update the LCD display")
             pygame.display.update()
@@ -150,17 +148,15 @@ def display_reading(reading, last_reading):
     return reading
 
 i=0
-last_reading = None
 while True:
     i += 1
     try:
         log.info("Getting Reading from Nightscout - Loop #" + str(i))
-        response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=1",headers={'Accept': 'application/json'})
-        r=response.text.strip("[]") #Nightscout API returns as an array, so Python converts it to a list instead of a dict.  Stripping the brackets allows it to load as a dict.
+        response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
         log.info("Got Status Code: " + str(response.status_code))
-        log.info("Data: " + r)
-        j=json.loads(r.strip("[]"))
-        last_reading = display_reading(j, last_reading)
+        log.info("Data: " + response.text)
+        j=json.loads(response.text)
+        display_reading(j)
 
     except Exception as e:
         log.error(e,exc_info=True)
