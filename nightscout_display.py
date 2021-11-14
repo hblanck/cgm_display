@@ -106,10 +106,13 @@ def display_reading(readings):
     log.debug("About to push: " + str_reading + " to the display")
 
     change = reading["sgv"] - last_reading["sgv"]
+    str_change=str(change)
+    if change > 0: str_change = "+"+str(change)
+
     log.debug("Change from last reading is: " + str(change))
 
     try:        
-        log.debug("Displaying:\n"+str_difference+"\n"+str_reading+"\n"+str(change))
+        log.debug("Displaying:\n"+str_difference+"\n"+str_reading+"\n"+str_change)
         if display:
             if isNightTime():
                log.debug("Setting to Nighttime mode")
@@ -134,7 +137,7 @@ def display_reading(readings):
             lcd.blit(text_surface, rect)
 
             font_medium = pygame.font.Font(None, 135)
-            text_surface = font_medium.render(str(change),True,font_color)
+            text_surface = font_medium.render(str_change,True,font_color)
             rect = text_surface.get_rect(center=(240, 275))
             lcd.blit(text_surface, rect)
     
