@@ -65,6 +65,7 @@ def isNightTime():
     else:
         return False
 
+
 def display_reading(readings):
 
     reading=readings[0] #Current Reading
@@ -99,6 +100,7 @@ def display_reading(readings):
 
     trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
     log.debug("The arrow direction is: " + trend_arrow)
+
 
     str_reading = str(reading["sgv"]) + trend_arrow
     log.debug("About to push: " + str_reading + " to the display")
