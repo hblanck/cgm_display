@@ -107,6 +107,7 @@ def display_reading(readings):
     log.debug("Change from last reading is: " + str(change))
 
     try:        
+        log.debug("Displaying:\n"+str_difference+"\n"+str_reading+"\n"+str(change))
         if display:
             if isNightTime():
                log.debug("Setting to Nighttime mode")
