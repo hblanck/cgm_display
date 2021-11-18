@@ -98,7 +98,10 @@ def display_reading(readings):
     log.info("About to update Time Ago Display with reading from " + str_difference)
 
 
-    trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
+    if reading.haskeys("direction"):
+        trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
+    else:
+        trend_arrow = ""
     log.debug("The arrow direction is: " + trend_arrow)
 
 
@@ -112,7 +115,7 @@ def display_reading(readings):
     log.debug("Change from last reading is: " + str(change))
 
     try:        
-        log.debug("Displaying:\n"+str_difference+"\n"+str_reading+"\n"+str_change)
+        log.debug("Displaying:\n\t"+str_difference+"\n\t"+str_reading+"\n\t"+str_change)
         if display:
             if isNightTime():
                log.debug("Setting to Nighttime mode")
