@@ -20,7 +20,6 @@ from Defaults import Defaults
 #Process command line arguments
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
-#ArgParser.add_argument("--apikey", '-a', help="Set your Sugarmate API Key (6 digit code from your Sugarmate Account)")
 ArgParser.add_argument("--nightscoutserver", '-ns', help="Set the base URL for your Nightscout server e.g. https://mynighscout.domain.com")
 ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Sugarmate")
 ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
@@ -51,10 +50,10 @@ else:
     TIME_AGO_INTERVAL = 30
 
 if  platform.platform().find("arm") >= 0:
-    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" #Doesn't seem to work.  Still get prompt when running foreground
     import pygame
     global pygame, lcd
-    os.putenv('SDL_FBDEV', '/dev/fb1')
+    os.putenv('SDL_FBDEV', '/dev/fb1') #This may need to change to accomodate a different type of disolay using different device frame buffer.
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
 
@@ -78,8 +77,6 @@ def display_reading(readings):
         display = False
 
     if display:
-        #log.debug("Skipping display.  Not on Raspberry Pi")
-        #return
         global pygame, lcd
         log.debug("Getting ready to display on the LCD panel")
 
@@ -88,22 +85,18 @@ def display_reading(readings):
     reading_time = datetime.datetime.utcfromtimestamp(int(str(reading["date"])[0:10]))
     difference = round((now - reading_time).total_seconds()/60)
     log.debug("Time difference since last good reading is: " + str(difference))
-    #print("Time difference since last good reading is: " + str(difference))
     if difference == 0:
         str_difference = "Just Now"
     elif difference == 1:
         str_difference = str(difference) + " Minute Ago"
     else:
         str_difference = str(difference) + " Minutes Ago"
-    log.info("About to update Time Ago Display with reading from " + str_difference)
 
-
-    if "direction" in reading.keys():
+    if "direction" in reading:
         trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
     else:
         trend_arrow = ""
     log.debug("The arrow direction is: " + trend_arrow)
-
 
     str_reading = str(reading["sgv"]) + trend_arrow
     log.debug("About to push: " + str_reading + " to the display")
@@ -111,7 +104,6 @@ def display_reading(readings):
     change = reading["sgv"] - last_reading["sgv"]
     str_change=str(change)
     if change > 0: str_change = "+"+str(change)
-
     log.debug("Change from last reading is: " + str(change))
 
     try:        
