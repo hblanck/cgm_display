@@ -98,7 +98,7 @@ def display_reading(readings):
     log.info("About to update Time Ago Display with reading from " + str_difference)
 
 
-    if reading.haskeys("direction"):
+    if "direction" in reading.keys():
         trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
     else:
         trend_arrow = ""
