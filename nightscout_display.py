@@ -98,7 +98,10 @@ def display_reading(readings):
         trend_arrow = ""
     log.debug("The arrow direction is: " + trend_arrow)
 
-    str_reading = str(reading["sgv"]) + trend_arrow
+    if difference < 7:
+        str_reading = str(reading["sgv"]) + trend_arrow
+    else:
+        str_reading = "---"
     log.debug("About to push: " + str_reading + " to the display")
 
     change = reading["sgv"] - last_reading["sgv"]
