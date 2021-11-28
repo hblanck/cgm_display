@@ -69,8 +69,8 @@ def display_reading(readings):
 
     reading=readings[0] #Current Reading
     last_reading=readings[1] #Previous reading
-    log.debug("Current Reading: " + str(readings[0]))
-    log.debug("Previous Reading: " + str(readings[1]))
+    log.debug("Current Reading: {}".format(readings[0]))
+    log.debug("Previous Reading: {}".format(readings[1]))
 
     display = True
     if not platform.platform().find("arm") >= 0:
@@ -80,11 +80,11 @@ def display_reading(readings):
         global pygame, lcd
         log.debug("Getting ready to display on the LCD panel")
 
-    log.debug("Displaying with Reading of " + str(reading))
+    log.debug("Displaying with Reading of {}".format(reading))
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(int(str(reading["date"])[0:10]))
     difference = round((now - reading_time).total_seconds()/60)
-    log.debug("Time difference since last good reading is: " + str(difference))
+    log.debug("Time difference since last good reading is: {}".format(difference))
     if difference == 0:
         str_difference = "Just Now"
     elif difference == 1:
@@ -96,21 +96,21 @@ def display_reading(readings):
         trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
     else:
         trend_arrow = ""
-    log.debug("The arrow direction is: " + trend_arrow)
+    log.debug("The arrow direction is: {}".format(trend_arrow))
 
     if difference < 7:
         str_reading = str(reading["sgv"]) + trend_arrow
     else:
         str_reading = "---"
-    log.debug("About to push: " + str_reading + " to the display")
+    log.debug("About to push: {} to the display".format(str_reading))
 
     change = reading["sgv"] - last_reading["sgv"]
     str_change=str(change)
     if change > 0: str_change = "+"+str(change)
-    log.debug("Change from last reading is: " + str(change))
+    log.debug("Change from last reading is: {}".format(change))
 
     try:        
-        log.debug("Displaying:\n\t"+str_difference+"\n\t"+str_reading+"\n\t"+str_change)
+        log.debug("Displaying:\n\t {}\n\t{}\n\t{}".format(str_difference,str_reading,str_change))
         if display:
             if isNightTime():
                log.debug("Setting to Nighttime mode")
@@ -157,8 +157,8 @@ while True:
     try:
         log.info("Getting Reading from Nightscout - Loop #" + str(i))
         response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
-        log.info("Got Status Code: " + str(response.status_code))
-        log.info("Data: " + response.text)
+        log.info("Got Status Code: {}".format(response.status_code))
+        log.info("Data: {}".format(response.text))
         j=json.loads(response.text)
         display_reading(j)
 
