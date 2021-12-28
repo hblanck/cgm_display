@@ -96,7 +96,8 @@ def parse_dexcom_response(ops, res):
         mgdl = res.json()[0]['Value']
         
         #trend_english = DIRECTIONS.keys()[DIRECTIONS.values().index(trend)] # Python2 version
-        trend_english=list(Defaults.DIRECTIONS.keys())[list(Defaults.DIRECTIONS.values()).index(trend)] # Python3 version
+        #trend_english=list(Defaults.DIRECTIONS.keys())[list(Defaults.DIRECTIONS.values()).index(trend)] # Python3 version
+        trend_english=Defaults.DIRECTIONS[trend]
         log.info("Last bg: {}  trending: {} ({})  last reading at: {} seconds ago".format(mgdl, trend_english, trend, reading_lag))
         if reading_lag > LAST_READING_MAX_LAG:
             log.warning("***WARN It has been {} minutes since DEXCOM got a new measurement".format(int(reading_lag/60)))
