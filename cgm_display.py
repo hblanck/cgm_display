@@ -218,7 +218,7 @@ def display_reading(reading, bgdelta):
 
         font_big = pygame.font.SysFont("dejavusans", 200)
         #trend_index = reading["trend"] - This was causing the line below using trend_index to fail all of a sudden.  Passing trend string instead of the index.  2/6/22
-        trend_index = Defaults.DIRECTIONS[reading['trend']]  ## Added 2/5/22 to fix above problem.  Not sure how if ever worked....
+        trend_index = Defaults.DIRECTIONS[reading['trend']]  ## Added 2/5/22 to fix above problem.  Not sure how if ever worked...
         if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
            str_reading = "---"
         else:
