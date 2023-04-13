@@ -21,8 +21,8 @@ from Defaults import Defaults
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
 ArgParser.add_argument("--nightscoutserver", '-ns', help="Set the base URL for your Nightscout server e.g. https://mynighscout.domain.com")
-ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Sugarmate")
-ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
+ArgParser.add_argument("--polling_interval", default=60, help="Polling interval for getting updates from Sugarmate")
+ArgParser.add_argument("--time_ago_interval", default=30, help="Polling interval for updating the \"Time Ago\" detail")
 args=ArgParser.parse_args()
 
 log = logging.getLogger(__file__)
@@ -39,16 +39,12 @@ if args.nightscoutserver != None:
 else:
     sys.exit("No Nighscout URL defined.  Exiting")
 
-if args.polling_interval != None:
-    CHECK_INTERVAL = int(args.polling_interval)
-else:
-    CHECK_INTERVAL = 60
+log.debug(f'Using Arguments: {args}')
 
-if args.time_ago_interval != None:
-    TIME_AGO_INTERVAL = int(args.time_ago_interval)
-else:
-    TIME_AGO_INTERVAL = 30
+CHECK_INTERVAL = int(args.polling_interval)
+TIME_AGO_INTERVAL = int(args.time_ago_interval)
 
+log.debug(f"Platform we're running on is: {platform.platform()}")
 if  platform.platform().find("arm") >= 0:
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" #Doesn't seem to work.  Still get prompt when running foreground
     import pygame
@@ -69,8 +65,8 @@ def display_reading(readings):
 
     reading=readings[0] #Current Reading
     last_reading=readings[1] #Previous reading
-    log.debug("Current Reading: {}".format(readings[0]))
-    log.debug("Previous Reading: {}".format(readings[1]))
+    log.debug(f"Current Reading: {readings[0]}")
+    log.debug(f"Previous Reading: {readings[1]}")
 
     display = True
     if not platform.platform().find("arm") >= 0:
@@ -80,11 +76,11 @@ def display_reading(readings):
         global pygame, lcd
         log.debug("Getting ready to display on the LCD panel")
 
-    log.debug("Displaying with Reading of {}".format(reading))
+    log.debug(f"Displaying with Reading of {reading}")
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(int(str(reading["date"])[0:10]))
     difference = round((now - reading_time).total_seconds()/60)
-    log.debug("Time difference since last good reading is: {}".format(difference))
+    log.debug(f"Time difference since last good reading is: {difference}")
     if difference == 0:
         str_difference = "Just Now"
     elif difference == 1:
@@ -96,21 +92,21 @@ def display_reading(readings):
         trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
     else:
         trend_arrow = ""
-    log.debug("The arrow direction is: {}".format(trend_arrow))
+    log.debug(f"The arrow direction is: {trend_arrow}")
 
     if difference < 7:
         str_reading = str(reading["sgv"]) + trend_arrow
     else:
         str_reading = "---"
-    log.debug("About to push: {} to the display".format(str_reading))
+    log.debug(f"About to push: {str_reading} to the display")
 
     change = reading["sgv"] - last_reading["sgv"]
     str_change=str(change)
     if change > 0: str_change = "+"+str(change)
-    log.debug("Change from last reading is: {}".format(change))
+    log.debug(f"Change from last reading is: {change}")
 
     try:        
-        log.debug("Displaying:\n\t {}\n\t{}\n\t{}".format(str_difference,str_reading,str_change))
+        log.debug(f"Displaying:\n\t {str_difference}\n\t{str_reading}\n\t{str_change}")
         if display:
             if isNightTime():
                log.debug("Setting to Nighttime mode")
@@ -155,10 +151,10 @@ i=0
 while True:
     i += 1
     try:
-        log.info("Getting Reading from Nightscout - Loop #" + str(i))
+        log.info(f"Getting Reading from Nightscout - Loop #{i}")
         response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
-        log.info("Got Status Code: {}".format(response.status_code))
-        log.info("Data: {}".format(response.text))
+        log.info(f"Got Status Code: {response.status_code}")
+        log.info(f"Data: {response.text}")
         j=json.loads(response.text)
         display_reading(j)
 
