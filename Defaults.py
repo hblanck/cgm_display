@@ -48,6 +48,11 @@ class Defaults:
     #Nighttime for Night Mode
     NIGHTMODE=(22,23,24,0,1,2,3,4,5,6) #Hours to use Night Mode
 
+    #Loop freshness Icons (Borrowed these from the Loop Build)
+    Loop_Fresh = "loop-fresh@38mm.png"
+    Loop_Aging = "loop-aging@38mm.png"
+    Loop_Stale = "loop-stale@38mm.png"
+
 
 class Error(Exception):
     """Base class for exceptions in this module."""
