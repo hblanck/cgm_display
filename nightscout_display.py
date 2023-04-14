@@ -61,7 +61,7 @@ def isNightTime():
         return False
 
 
-def display_reading(readings):
+def display_reading(readings,devicestatus):
 
     reading=readings[0] #Current Reading
     last_reading=readings[1] #Previous reading
@@ -105,6 +105,18 @@ def display_reading(readings):
     if change > 0: str_change = "+"+str(change)
     log.debug(f"Change from last reading is: {change}")
 
+    loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'],'%Y-%m-%dT%H:%M:%SZ')
+    loop_time_difference = round((now - loop_time).total_seconds()/60)
+    log.debug(f'Test Random Loop Age is: {loop_time_difference} minutes')
+    if 0 <= loop_time_difference <= 5:
+        loop_image = Defaults.Loop_Fresh
+    elif (6 <= loop_time_difference <= 10):
+        loop_image = Defaults.Loop_Aging
+    else:
+        loop_image = Defaults.Loop_Stale
+
+    log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
+
     try:        
         log.debug(f"Displaying:\n\t {str_difference}\n\t{str_reading}\n\t{str_change}")
         if display:
@@ -134,6 +146,10 @@ def display_reading(readings):
             text_surface = font_medium.render(str_change,True,font_color)
             rect = text_surface.get_rect(center=(240, 275))
             lcd.blit(text_surface, rect)
+
+            text_surface = pygame.image.load(loop_image)
+            rect = text_surface.get_rect(center=(450,290))
+            lcd.blit(text_surface, rect)
     
             log.debug("About to update the LCD display")
             pygame.display.update()
@@ -151,15 +167,15 @@ i=0
 while True:
     i += 1
     try:
-        log.info(f"Getting Reading from Nightscout - Loop #{i}")
+        log.info(f"Getting Reading and Device Status from Nightscout - Loop #{i}")
         response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
-        log.info(f"Got Status Code: {response.status_code}")
-        log.info(f"Data: {response.text}")
-        j=json.loads(response.text)
-        display_reading(j)
+        log.info(f"Got Status Code: {response.status_code}\nData: {response.text}")
+        devicestatus_response=requests.get("https://nightscout.blanckfamily.net/api/v1/devicestatus",headers={'Accept': 'application/json'})
+        log.info(f"DeviceStatus Status Code: {devicestatus_response.status_code}")
+        log.debug(f"DeviceStatus: {devicestatus_response.text}")
+        display_reading(response.json(),devicestatus_response.json())
 
     except Exception as e:
         log.error(e,exc_info=True)
         log.info("Exception processing The Reading, Sleeping and trying again....")
     sleep(CHECK_INTERVAL)
-
