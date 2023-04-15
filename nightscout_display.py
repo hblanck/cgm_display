@@ -108,11 +108,11 @@ def display_reading(readings,devicestatus):
     loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'],'%Y-%m-%dT%H:%M:%SZ')
     loop_time_difference = round((now - loop_time).total_seconds()/60)
     if 0 <= loop_time_difference <= 5:
-        loop_image = os.path.join(os.getcwd(),Defaults.Loop_Fresh)
+        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Fresh)
     elif (6 <= loop_time_difference <= 10):
-        loop_image = os.path.join(os.getcwd(),Defaults.Loop_Aging)
+        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Aging)
     else:
-        loop_image = os.path.join(os.getcwd(),Defaults.Loop_Stale)
+        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Stale)
 
     log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
 
