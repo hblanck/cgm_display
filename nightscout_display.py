@@ -147,7 +147,7 @@ def display_reading(readings,devicestatus):
             rect = text_surface.get_rect(center=(240, 275))
             lcd.blit(text_surface, rect)
 
-            text_surface = pygame.image.load(loop_image)
+            text_surface = pygame.image.load(os.path.join(os.getcwd(),loop_image))
             rect = text_surface.get_rect(center=(450,290))
             lcd.blit(text_surface, rect)
     
