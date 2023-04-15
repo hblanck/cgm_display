@@ -107,13 +107,12 @@ def display_reading(readings,devicestatus):
 
     loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'],'%Y-%m-%dT%H:%M:%SZ')
     loop_time_difference = round((now - loop_time).total_seconds()/60)
-    log.debug(f'Test Random Loop Age is: {loop_time_difference} minutes')
     if 0 <= loop_time_difference <= 5:
-        loop_image = Defaults.Loop_Fresh
+        loop_image = os.path.join(os.getcwd(),Defaults.Loop_Fresh)
     elif (6 <= loop_time_difference <= 10):
-        loop_image = Defaults.Loop_Aging
+        loop_image = os.path.join(os.getcwd(),Defaults.Loop_Aging)
     else:
-        loop_image = Defaults.Loop_Stale
+        loop_image = os.path.join(os.getcwd(),Defaults.Loop_Stale)
 
     log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
 
@@ -147,7 +146,8 @@ def display_reading(readings,devicestatus):
             rect = text_surface.get_rect(center=(240, 275))
             lcd.blit(text_surface, rect)
 
-            text_surface = pygame.image.load(os.path.join(os.getcwd(),loop_image))
+            log.debug(f'Using Loop Image file: {loop_image}')
+            text_surface = pygame.image.load(loop_image)
             rect = text_surface.get_rect(center=(450,290))
             lcd.blit(text_surface, rect)
     
