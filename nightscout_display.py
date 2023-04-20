@@ -9,12 +9,12 @@ from time import sleep
 import argparse
 import datetime
 import logging
-import threading
-import urllib
-import urllib.parse #Python3 requires this
 import requests
-import json
 from Defaults import Defaults
+#import threading
+#import urllib
+#import urllib.parse #Python3 requires this
+#import json
 #from builtins import None
 
 #Process command line arguments
@@ -63,18 +63,23 @@ def isNightTime():
 
 def display_reading(readings,devicestatus):
 
+    thePlatform = platform.platform().lower()
     reading=readings[0] #Current Reading
     last_reading=readings[1] #Previous reading
     log.debug(f"Current Reading: {readings[0]}")
     log.debug(f"Previous Reading: {readings[1]}")
 
-    display = True
-    if not platform.platform().find("arm") >= 0:
-        display = False
+    display = (thePlatform.find("arm") >= 0)
 
     if display:
         global pygame, lcd
         log.debug("Getting ready to display on the LCD panel")
+        if thePlatform.find("linux") >= 0:
+            fonttouse = Defaults.Linux_font
+        elif thePlatform.find("macos") >= 0:
+            fonttouse = Defaults.Mac_font
+        else:
+            fonttouse = ""
 
     log.debug(f"Displaying with Reading of {reading}")
     now = datetime.datetime.utcnow()
@@ -135,7 +140,7 @@ def display_reading(readings,devicestatus):
             lcd.blit(text_surface, rect)
 
             log.debug("Setting up Reading Display")
-            font_big = pygame.font.SysFont("dejavusans", 200)
+            font_big = pygame.font.SysFont(fonttouse, 200)
     
             text_surface = font_big.render(str_reading, True, font_color)
             rect = text_surface.get_rect(center=(240,155))
@@ -170,7 +175,7 @@ while True:
         log.info(f"Getting Reading and Device Status from Nightscout - Loop #{i}")
         response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
         log.info(f"Got Status Code: {response.status_code}\nData: {response.text}")
-        devicestatus_response=requests.get("https://nightscout.blanckfamily.net/api/v1/devicestatus",headers={'Accept': 'application/json'})
+        devicestatus_response=requests.get(NIGHTSCOUT+"/api/v1/devicestatus",headers={'Accept': 'application/json'})
         log.info(f"DeviceStatus Status Code: {devicestatus_response.status_code}")
         log.debug(f"DeviceStatus: {devicestatus_response.text}")
         display_reading(response.json(),devicestatus_response.json())
