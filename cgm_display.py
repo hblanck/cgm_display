@@ -48,7 +48,7 @@ log.setLevel(Config.get("logging", 'log_level').upper())
 if args.logging == "DEBUG":
     log.setLevel("DEBUG")
 
-log.debug("Running with command line: " + str(sys.argv))
+log.debug(f"Running with command line: {sys.argv}")
 
 global TheReading
 
@@ -87,7 +87,7 @@ def isNightTime():
         return False
 
 def parse_dexcom_response(ops, res):
-    log.debug(res.json())
+    log.debug(f'Parsing response: {res.json()}')
     epochtime = int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
     try:
         last_reading_time = int(re.search('\d+', res.json()[0]['ST']).group())/1000
@@ -98,9 +98,9 @@ def parse_dexcom_response(ops, res):
         #trend_english = DIRECTIONS.keys()[DIRECTIONS.values().index(trend)] # Python2 version
         #trend_english=list(Defaults.DIRECTIONS.keys())[list(Defaults.DIRECTIONS.values()).index(trend)] # Python3 version
         trend_english=Defaults.DIRECTIONS[trend]
-        log.info("Last bg: {}  trending: {} ({})  last reading at: {} seconds ago".format(mgdl, trend_english, trend, reading_lag))
+        log.info(f"Last bg: {mgdl}  trending: {trend_english} ({trend})  last reading at: {reading_lag} seconds ago")
         if reading_lag > LAST_READING_MAX_LAG:
-            log.warning("***WARN It has been {} minutes since DEXCOM got a new measurement".format(int(reading_lag/60)))
+            log.warning(f"***WARN It has been {int(reading_lag/60)} minutes since DEXCOM got a new measurement")
             last_reading_lag = True
         else:
             last_reading_lag = False
@@ -113,9 +113,7 @@ def parse_dexcom_response(ops, res):
                 "last_reading_lag": last_reading_lag
                 }
     except IndexError:
-        log.error(
-                "Caught IndexError: return code:{} ... response output" +
-                " below".format(res.status_code))
+        log.error(f"Caught IndexError: return code:{res.status_code} ... response output below")
         log.error(res.__dict__)
         return None
 
@@ -132,7 +130,7 @@ def monitor_dexcom():
         if not opts.sessionID:
             authfails = 0
             opts.sessionID = http_general.get_sessionID(opts)
-            log.debug("Got auth token {}".format(opts.sessionID))
+            log.debug(f"Got auth token {opts.sessionID}")
         res = http_general.fetch(opts)
         if res and res.status_code < 400:
             fetchfails = 0
@@ -151,9 +149,9 @@ def monitor_dexcom():
         else:
             failures += 1
             opts.sessionID = None
-            log.warning("Saw an error from the dexcom api, code: {}.  details to follow".format(res.status_code))
+            log.warning(f"Saw an error from the dexcom api, code: {res.status_code}.  details to follow")
             raise opts.FetchError(res.status_code, res)
-            log.warning("Fetch failed on: {}".format(res.status_code))
+            log.warning(f"Fetch failed on: {res.status_code}")
             return
             if fetchfails > (MAX_FETCHFAILS/2):
                 log.warning("Trying to re-auth...")
@@ -180,26 +178,33 @@ def display_reading(reading, bgdelta):
     log.debug("Displaying with Reading of " + str(reading) + " and a change of " + '{0:{1}}'.format(bgdelta, '+' if bgdelta else ''))
     #log.debug("Differeince is " + '{0:{1}}'.format(number, '+' if number else ''))
     # On Raspberry Pi with LCD display only
+    thePlatform = platform.platform().lower()
     if not platform.platform().find("arm") >= 0:
         log.debug("Skipping display.  Not on Raspberry Pi")
         return
     global pygame, lcd
     log.debug("Getting ready to display on the LCD panel")
+    if thePlatform.find("linux") >= 0:
+        fonttouse = Defaults.Linux_font
+    elif thePlatform.find("macos") >= 0:
+        fonttouse = Defaults.Mac_font
+    else:
+        fonttouse = ""
 
     now = datetime.datetime.utcnow()
     reading_time = datetime.datetime.utcfromtimestamp(reading["last_reading_time"])
     difference = round((now - reading_time).total_seconds()/60)
-    log.debug("Time difference since last good reading is: " + str(difference))
+    log.debug(f"Time difference since last good reading is: {difference}")
     if difference == 0:
         str_difference = "Just Now"
     elif difference == 1:
         str_difference = str(difference) + " Minute Ago"
     else:
         str_difference = str(difference) + " Minutes Ago"
-    log.info("About to update Time Ago Display with reading from " + str_difference)
-    log.debug("About to acquire lock with: "+str(lock))
+    log.info(f"About to update Time Ago Display with reading from {str_difference}")
+    log.debug(f"About to acquire lock with: {lock}")
     lock.acquire(blocking=True)
-    log.debug("Acquired lock "+str(lock))
+    log.debug(f"Acquired lock {lock}")
 
     try:
         if isNightTime():
@@ -216,7 +221,8 @@ def display_reading(reading, bgdelta):
         rect = text_surface.get_rect(center=(240,20))
         lcd.blit(text_surface, rect)
 
-        font_big = pygame.font.SysFont("dejavusans", 200)
+        #font_big = pygame.font.SysFont("dejavusans", 200)
+        font_big = pygame.font.SysFont(fonttouse, 200)
         #trend_index = reading["trend"] - This was causing the line below using trend_index to fail all of a sudden.  Passing trend string instead of the index.  2/6/22
         trend_index = Defaults.DIRECTIONS[reading['trend']]  ## Added 2/5/22 to fix above problem.  Not sure how if ever worked...
         if (reading["last_reading_lag"] == True) or (difference > round(LAST_READING_MAX_LAG/60)):
@@ -235,9 +241,9 @@ def display_reading(reading, bgdelta):
         pygame.display.update()
         pygame.mouse.set_visible(False)
     finally:
-        log.debug("About to release lock: "+str(lock))
+        log.debug(f"About to release lock: {lock}")
         lock.release()
-        log.debug("Lock released: "+str(lock))
+        log.debug(f"Lock released: {lock}")
    
 def TimeAgoThread():
     global TheReading, BGDifference
@@ -248,7 +254,7 @@ def TimeAgoThread():
 
 if __name__ == '__main__':      
     lock = threading.RLock()
-    log.debug("Created lock: " + str(lock))
+    log.debug(f"Created lock: {lock}")
     
     LastReading = 0
     BGDifference = 0
@@ -270,8 +276,8 @@ if __name__ == '__main__':
             TheReading=monitor_dexcom()
             if (TheReading["last_reading_time"] != LastReadingTime):
                 BGDifference = TheReading["bg"] - LastReading
-            log.debug("Iteration #"+str(i) + "-" + str(TheReading))
-            log.debug("Difference of " + str(BGDifference))
+            log.debug(f"Iteration #{i}-{TheReading}")
+            log.debug(f"Difference of {BGDifference}")
         except:
             log.info("Exception processing The Reading, Sleeping and trying again....")
         sleep(CHECK_INTERVAL)

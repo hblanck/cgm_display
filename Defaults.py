@@ -53,6 +53,10 @@ class Defaults:
     Loop_Aging = "loop-aging@38mm.png"
     Loop_Stale = "loop-stale@38mm.png"
 
+    #Default diplay fonts for different platforms
+    Linux_font = "dejavusans"
+    Mac_font = "arialunicode"
+
 
 class Error(Exception):
     """Base class for exceptions in this module."""
