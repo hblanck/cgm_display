@@ -17,6 +17,8 @@ from Defaults import Defaults
 #import json
 #from builtins import None
 
+from nightscout_data import Nightscout
+
 #Process command line arguments
 ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
@@ -25,17 +27,20 @@ ArgParser.add_argument("--polling_interval", default=60, help="Polling interval 
 ArgParser.add_argument("--time_ago_interval", default=30, help="Polling interval for updating the \"Time Ago\" detail")
 args=ArgParser.parse_args()
 
-log = logging.getLogger(__file__)
-log.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-log.addHandler(ch)
+# log = logging.getLogger(__file__)
+# log.setLevel(logging.INFO)
+# formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
+# ch = logging.StreamHandler()
+# ch.setFormatter(formatter)
+# log.addHandler(ch)
+from logger import log
+
 if args.logging == "DEBUG":
     log.setLevel(logging.DEBUG)
 
 if args.nightscoutserver != None:
-    NIGHTSCOUT = args.nightscoutserver
+    #NIGHTSCOUT = args.nightscoutserver
+    nightscout = Nightscout(args.nightscoutserver)
 else:
     sys.exit("No Nighscout URL defined.  Exiting")
 
@@ -173,12 +178,13 @@ while True:
     i += 1
     try:
         log.info(f"Getting Reading and Device Status from Nightscout - Loop #{i}")
-        response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
-        log.info(f"Got Status Code: {response.status_code}\nData: {response.text}")
-        devicestatus_response=requests.get(NIGHTSCOUT+"/api/v1/devicestatus",headers={'Accept': 'application/json'})
-        log.info(f"DeviceStatus Status Code: {devicestatus_response.status_code}")
-        log.debug(f"DeviceStatus: {devicestatus_response.text}")
-        display_reading(response.json(),devicestatus_response.json())
+        # response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
+        # log.info(f"Got Status Code: {response.status_code}\nData: {response.text}")
+        # devicestatus_response=requests.get(NIGHTSCOUT+"/api/v1/devicestatus",headers={'Accept': 'application/json'})
+        # log.info(f"DeviceStatus Status Code: {devicestatus_response.status_code}")
+        # log.debug(f"DeviceStatus: {devicestatus_response.text}")
+        # display_reading(response.json(),devicestatus_response.json())
+        display_reading(nightscout.getReading(), nightscout.getDeviceStatus())
 
     except Exception as e:
         log.error(e,exc_info=True)
