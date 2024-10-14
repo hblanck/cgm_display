@@ -1,6 +1,6 @@
-##Get CGM information from our Nightscout Server
-##When Dexcom and Sugarmate aren't working
-##
+# Get CGM information from our Nightscout Server
+# When Dexcom and Sugarmate aren't working
+#
 
 import os
 import sys
@@ -9,31 +9,24 @@ from time import sleep
 import argparse
 import datetime
 import logging
-import requests
+from logger import log
+# import requests
 from Defaults import Defaults
-#import threading
-#import urllib
-#import urllib.parse #Python3 requires this
-#import json
-#from builtins import None
+# import threading
+# import urllib
+# import urllib.parse #Python3 requires this
+# import json
+# from builtins import None
 
 from nightscout_data import Nightscout
 
-#Process command line arguments
-ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
+# Process command line arguments
+ArgParser = argparse.ArgumentParser(description="Handle Command Line Arguments")
 ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
 ArgParser.add_argument("--nightscoutserver", '-ns', help="Set the base URL for your Nightscout server e.g. https://mynighscout.domain.com")
 ArgParser.add_argument("--polling_interval", default=60, help="Polling interval for getting updates from Sugarmate")
 ArgParser.add_argument("--time_ago_interval", default=30, help="Polling interval for updating the \"Time Ago\" detail")
-args=ArgParser.parse_args()
-
-# log = logging.getLogger(__file__)
-# log.setLevel(logging.INFO)
-# formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
-# ch = logging.StreamHandler()
-# ch.setFormatter(formatter)
-# log.addHandler(ch)
-from logger import log
+args = ArgParser.parse_args()
 
 if args.logging == "DEBUG":
     log.setLevel(logging.DEBUG)
@@ -50,13 +43,14 @@ CHECK_INTERVAL = int(args.polling_interval)
 TIME_AGO_INTERVAL = int(args.time_ago_interval)
 
 log.debug(f"Platform we're running on is: {platform.platform()}")
-if  platform.platform().find("arm") >= 0:
-    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" #Doesn't seem to work.  Still get prompt when running foreground
+if platform.platform().find("arm") >= 0:
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" # Doesn't seem to work.  Still get prompt when running foreground
     import pygame
     global pygame, lcd
     os.putenv('SDL_FBDEV', '/dev/fb1') #This may need to change to accomodate a different type of disolay using different device frame buffer.
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
+
 
 def isNightTime():
     now = datetime.datetime.now()
@@ -173,17 +167,12 @@ def display_reading(readings,devicestatus):
         log.debug("Done with display")
     return reading
 
-i=0
+
+i = 0
 while True:
     i += 1
     try:
         log.info(f"Getting Reading and Device Status from Nightscout - Loop #{i}")
-        # response=requests.get(NIGHTSCOUT+"/api/v1/entries/sgv?count=2",headers={'Accept': 'application/json'}) #Get the last two readings
-        # log.info(f"Got Status Code: {response.status_code}\nData: {response.text}")
-        # devicestatus_response=requests.get(NIGHTSCOUT+"/api/v1/devicestatus",headers={'Accept': 'application/json'})
-        # log.info(f"DeviceStatus Status Code: {devicestatus_response.status_code}")
-        # log.debug(f"DeviceStatus: {devicestatus_response.text}")
-        # display_reading(response.json(),devicestatus_response.json())
         display_reading(nightscout.getReading(), nightscout.getDeviceStatus())
 
     except Exception as e:
