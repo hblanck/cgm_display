@@ -60,6 +60,19 @@ def isNightTime():
         return False
 
 
+def getLoopImage(devicestatus, now):
+    loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'],'%Y-%m-%dT%H:%M:%SZ')
+    loop_time_difference = round((now - loop_time).total_seconds()/60)
+    if 0 <= loop_time_difference <= 5:
+        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Fresh)
+    elif (6 <= loop_time_difference <= 10):
+        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Aging)
+    else:
+        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Stale)
+    log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
+    return loop_image
+
+
 def display_reading(readings,devicestatus):
 
     thePlatform = platform.platform().lower()
@@ -109,17 +122,6 @@ def display_reading(readings,devicestatus):
     if change > 0: str_change = "+"+str(change)
     log.debug(f"Change from last reading is: {change}")
 
-    loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'],'%Y-%m-%dT%H:%M:%SZ')
-    loop_time_difference = round((now - loop_time).total_seconds()/60)
-    if 0 <= loop_time_difference <= 5:
-        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Fresh)
-    elif (6 <= loop_time_difference <= 10):
-        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Aging)
-    else:
-        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Stale)
-
-    log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
-
     try:        
         log.debug(f"Displaying:\n\t {str_difference}\n\t{str_reading}\n\t{str_change}")
         if display:
@@ -150,11 +152,13 @@ def display_reading(readings,devicestatus):
             rect = text_surface.get_rect(center=(240, 275))
             lcd.blit(text_surface, rect)
 
-            log.debug(f'Using Loop Image file: {loop_image}')
-            text_surface = pygame.image.load(loop_image)
-            rect = text_surface.get_rect(center=(450,290))
-            lcd.blit(text_surface, rect)
-    
+            if devicestatus:
+                loop_image = getLoopImage(devicestatus, now)
+                log.debug(f'Using Loop Image file: {loop_image}')
+                text_surface = pygame.image.load(loop_image)
+                rect = text_surface.get_rect(center=(450,290))
+                lcd.blit(text_surface, rect)
+            
             log.debug("About to update the LCD display")
             pygame.display.update()
             pygame.mouse.set_visible(False)
