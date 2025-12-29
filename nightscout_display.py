@@ -64,8 +64,8 @@ def display_reading(readings, devicestatus):
             fonttouse = ""
 
     log.debug(f"Displaying with Reading of {reading}")
-    now = datetime.datetime.utcnow()
-    reading_time = datetime.datetime.utcfromtimestamp(int(str(reading["date"])[0:10]))
+    now = datetime.datetime.now(datetime.timezone.utc)
+    reading_time = datetime.datetime.fromtimestamp(int(str(reading["date"])[0:10]), datetime.timezone.utc)
     difference = round((now - reading_time).total_seconds()/60)
     log.debug(f"Time difference since last good reading is: {difference}")
     if difference == 0:
