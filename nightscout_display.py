@@ -1,39 +1,24 @@
 # Get CGM information from our Nightscout Server
 # When Dexcom and Sugarmate aren't working
 #
-
 import os
 import sys
 import platform
 from time import sleep
-import argparse
 import datetime
 import logging
 from logger import log
-# import requests
 from Defaults import Defaults
-# import threading
-# import urllib
-# import urllib.parse #Python3 requires this
-# import json
-# from builtins import None
 
 from nightscout_data import Nightscout
+from cgm_args import cgm_args
 
-# Process command line arguments
-ArgParser = argparse.ArgumentParser(description="Handle Command Line Arguments")
-ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
-ArgParser.add_argument("--nightscoutserver", '-ns', help="Set the base URL for your Nightscout server e.g. https://mynighscout.domain.com")
-ArgParser.add_argument("--polling_interval", default=60, help="Polling interval for getting updates from Sugarmate")
-ArgParser.add_argument("--time_ago_interval", default=30, help="Polling interval for updating the \"Time Ago\" detail")
-args = ArgParser.parse_args()
-
+args = cgm_args()
 if args.logging == "DEBUG":
     log.setLevel(logging.DEBUG)
 
-if args.nightscoutserver != None:
-    #NIGHTSCOUT = args.nightscoutserver
-    nightscout = Nightscout(args.nightscoutserver)
+if args.night_scout_server is not None:
+    nightscout = Nightscout(args.night_scout_server)
 else:
     sys.exit("No Nighscout URL defined.  Exiting")
 
@@ -44,12 +29,12 @@ TIME_AGO_INTERVAL = int(args.time_ago_interval)
 
 log.debug(f"Platform we're running on is: {platform.platform()}")
 if platform.platform().find("arm") >= 0:
-    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" # Doesn't seem to work.  Still get prompt when running foreground
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"  # Doesn't seem to work.  Still get prompt when running foreground
     import pygame
     global pygame, lcd
-    os.putenv('SDL_FBDEV', '/dev/fb1') #This may need to change to accomodate a different type of disolay using different device frame buffer.
+    os.putenv('SDL_FBDEV', '/dev/fb1')  # This may need to change to accomodate a different type of disolay using different device frame buffer.
     pygame.init()
-    lcd=pygame.display.set_mode((480, 320))
+    lcd = pygame.display.set_mode((480, 320))
 
 
 def isNightTime():
@@ -59,25 +44,10 @@ def isNightTime():
     else:
         return False
 
-
-def getLoopImage(devicestatus, now):
-    loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'],'%Y-%m-%dT%H:%M:%SZ')
-    loop_time_difference = round((now - loop_time).total_seconds()/60)
-    if 0 <= loop_time_difference <= 5:
-        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Fresh)
-    elif (6 <= loop_time_difference <= 10):
-        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Aging)
-    else:
-        loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),Defaults.Loop_Stale)
-    log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
-    return loop_image
-
-
-def display_reading(readings,devicestatus):
-
+def display_reading(readings, devicestatus):
     thePlatform = platform.platform().lower()
-    reading=readings[0] #Current Reading
-    last_reading=readings[1] #Previous reading
+    reading = readings[0]  # Current Reading
+    last_reading = readings[1]  # Previous reading
     log.debug(f"Current Reading: {readings[0]}")
     log.debug(f"Previous Reading: {readings[1]}")
 
@@ -94,8 +64,8 @@ def display_reading(readings,devicestatus):
             fonttouse = ""
 
     log.debug(f"Displaying with Reading of {reading}")
-    now = datetime.datetime.utcnow()
-    reading_time = datetime.datetime.utcfromtimestamp(int(str(reading["date"])[0:10]))
+    now = datetime.datetime.now(datetime.timezone.utc)
+    reading_time = datetime.datetime.fromtimestamp(int(str(reading["date"])[0:10]), datetime.timezone.utc)
     difference = round((now - reading_time).total_seconds()/60)
     log.debug(f"Time difference since last good reading is: {difference}")
     if difference == 0:
@@ -118,47 +88,61 @@ def display_reading(readings,devicestatus):
     log.debug(f"About to push: {str_reading} to the display")
 
     change = reading["sgv"] - last_reading["sgv"]
-    str_change=str(change)
-    if change > 0: str_change = "+"+str(change)
+    str_change = str(change)
+    if change > 0:
+        str_change = "+"+str(change)
     log.debug(f"Change from last reading is: {change}")
 
-    try:        
+    if devicestatus and "loop" in devicestatus[0]:
+        loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+        loop_time_difference = round((now - loop_time).total_seconds()/60)
+        if 0 <= loop_time_difference <= 5:
+            loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), Defaults.Loop_Fresh)
+        elif (6 <= loop_time_difference <= 10):
+            loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), Defaults.Loop_Aging)
+        else:
+            loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), Defaults.Loop_Stale)
+        log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
+    else:
+        loop_image = None
+        log.info(f"No Loop Data, No Loop status Image Used")
+
+    try:
         log.debug(f"Displaying:\n\t {str_difference}\n\t{str_reading}\n\t{str_change}")
         if display:
             if isNightTime():
-               log.debug("Setting to Nighttime mode")
-               lcd.fill(Defaults.BLACK)
-               font_color=Defaults.GREY
+                log.debug("Setting to Nighttime mode")
+                lcd.fill(Defaults.BLACK)
+                font_color = Defaults.GREY
             else:
-               log.debug("Setting to Daylight mode")
-               lcd.fill(Defaults.BLUE)
-               font_color=Defaults.WHITE
+                log.debug("Setting to Daylight mode")
+                lcd.fill(Defaults.BLUE)
+                font_color = Defaults.WHITE
 
             log.debug("Setting up Difference Display")
             font_time = pygame.font.Font(None, 75)
             text_surface = font_time.render(str_difference, True, font_color)
-            rect = text_surface.get_rect(center=(240,20))
+            rect = text_surface.get_rect(center=(240, 20))
             lcd.blit(text_surface, rect)
 
             log.debug("Setting up Reading Display")
             font_big = pygame.font.SysFont(fonttouse, 200)
-    
+
             text_surface = font_big.render(str_reading, True, font_color)
-            rect = text_surface.get_rect(center=(240,155))
+            rect = text_surface.get_rect(center=(240, 155))
             lcd.blit(text_surface, rect)
 
             font_medium = pygame.font.Font(None, 135)
-            text_surface = font_medium.render(str_change,True,font_color)
+            text_surface = font_medium.render(str_change, True, font_color)
             rect = text_surface.get_rect(center=(240, 275))
             lcd.blit(text_surface, rect)
 
-            if devicestatus:
-                loop_image = getLoopImage(devicestatus, now)
+            if loop_image is not None:
                 log.debug(f'Using Loop Image file: {loop_image}')
                 text_surface = pygame.image.load(loop_image)
-                rect = text_surface.get_rect(center=(450,290))
+                rect = text_surface.get_rect(center=(450, 290))
                 lcd.blit(text_surface, rect)
-            
+
             log.debug("About to update the LCD display")
             pygame.display.update()
             pygame.mouse.set_visible(False)
@@ -166,7 +150,7 @@ def display_reading(readings,devicestatus):
             log.info("Skipped display, not on Raspberry Pi")
     except Exception as e:
         log.info("Caught an Exception processing the display")
-        log.error(e,exc_info=True)
+        log.error(e, exc_info=True)
     finally:
         log.debug("Done with display")
     return reading

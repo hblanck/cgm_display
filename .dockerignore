@@ -1,0 +1,8 @@
+Dockerfile
+.DS_Store
+.dockerignore
+__pycache__/
+.vscode/
+.gitignore
+.git
+cgm_display_env/
