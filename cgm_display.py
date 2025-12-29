@@ -1,30 +1,19 @@
-#import ConfigParser #Python2 version
 import configparser #Python3 version
-import argparse
 import datetime
-import logging
+from logger import log
 import os
 import sys
 import threading
 import platform
 import re
-import requests
 import time
-import urllib
-import urllib.parse #Python3 requires this
 import http_general
 from time import sleep
-#from Defaults import Defaults, Error, AuthError, FetchError#
+from Defaults import Defaults, Error, AuthError, FetchError#
 from Defaults import Defaults
+from cgm_args import cgm_args
 
-#Process command line arguments
-ArgParser=argparse.ArgumentParser(description="Handle Command Line Arguments")
-ArgParser.add_argument("--logging", '-l', default="INFO", help="Logging level: INFO (Default) or DEBUG")
-ArgParser.add_argument("--username", "-u", help="Dexcom Share User Name")
-ArgParser.add_argument("--password", "-p", help="Dexcom Share Password")
-ArgParser.add_argument("--polling_interval", help="Polling interval for getting updates from Dexcom")
-ArgParser.add_argument("--time_ago_interval", help="Polling interval for updating the \"Time Ago\" detail")
-args=ArgParser.parse_args()
+args = cgm_args()
 
 # On Raspberry Pi with LCD display only
 if  platform.platform().find("arm") >= 0:
@@ -34,14 +23,6 @@ if  platform.platform().find("arm") >= 0:
     pygame.init()
     lcd=pygame.display.set_mode((480, 320))
 
-log = logging.getLogger(__file__)
-log.setLevel(logging.ERROR)
-formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-log.addHandler(ch)
-
-#Config = ConfigParser.SafeConfigParser()
 Config = configparser.SafeConfigParser()
 Config.read(os.path.dirname(os.path.realpath(__file__))+"/cgm_display.ini")
 log.setLevel(Config.get("logging", 'log_level').upper())
@@ -52,22 +33,22 @@ log.debug(f"Running with command line: {sys.argv}")
 
 global TheReading
 
-if args.username != None:
+if args.username:
     DEXCOM_ACCOUNT_NAME = args.username
 else:
     DEXCOM_ACCOUNT_NAME = Config.get("dexcomshare", "dexcom_share_login")
 
-if args.password != None:
+if args.password:
     DEXCOM_PASSWORD = args.password
 else:
     DEXCOM_PASSWORD = Config.get("dexcomshare", "dexcom_share_password")
 
-if args.polling_interval != None:
+if args.polling_interval:
     CHECK_INTERVAL = int(args.polling_interval)
 else:
     CHECK_INTERVAL = int(Config.get("dexcomshare", "polling_interval"))
 
-if args.time_ago_interval != None:
+if args.time_ago_interval:
     TIME_AGO_INTERVAL = int(args.time_ago_interval)
 else:
     TIME_AGO_INTERVAL = int(Config.get("dexcomshare","time_ago_interval"))
@@ -136,10 +117,6 @@ def monitor_dexcom():
             fetchfails = 0
             reading = parse_dexcom_response(opts, res)
             if reading:
-                # On Raspberry Pi with LCD display only
-                #if  platform.platform().find("arm") >= 0:
-                #    display_reading(reading,0)
-                    #sleep(180)
                 return reading
             else:
                 opts.sessionID = None
