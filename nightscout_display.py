@@ -161,7 +161,10 @@ while True:
     i += 1
     try:
         log.info(f"Getting Reading and Device Status from Nightscout - Loop #{i}")
-        display_reading(nightscout.getReading(), nightscout.getDeviceStatus())
+        reading = nightscout.getReading()
+        deviceStatus=nightscout.getDeviceStatus()
+        if reading is not None:
+            display_reading(reading, deviceStatus)
 
     except Exception as e:
         log.error(e,exc_info=True)
