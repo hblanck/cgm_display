@@ -1,169 +1,211 @@
-# Get CGM information from our Nightscout Server
-# When Dexcom and Sugarmate aren't working
-#
-import os
-import sys
-import platform
-from time import sleep
+"""Nightscout CGM display.
+
+Fetches CGM readings and device status from a Nightscout server and displays them.
+On Raspberry Pi (Linux/ARM), uses pygame to render to a PiTFT framebuffer.
+"""
+
+from __future__ import annotations
+
 import datetime
 import logging
-from logger import log
+import os
+import platform
+import sys
+from time import sleep
+from typing import Any, Optional
+
 from Defaults import Defaults
-
-from nightscout_data import Nightscout
 from cgm_args import cgm_args
+from logger import log
+from nightscout_data import Nightscout
+from pygame_display import PygameDisplay
 
-args = cgm_args()
-if args.logging == "DEBUG":
-    log.setLevel(logging.DEBUG)
-
-if args.night_scout_server is not None:
-    nightscout = Nightscout(args.night_scout_server)
-else:
-    sys.exit("No Nighscout URL defined.  Exiting")
-
-log.debug(f'Using Arguments: {args}')
-
-CHECK_INTERVAL = int(args.polling_interval)
-TIME_AGO_INTERVAL = int(args.time_ago_interval)
-
-log.debug(f"Platform we're running on is: {platform.platform()}")
-if platform.platform().find("arm") >= 0:
-    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"  # Doesn't seem to work.  Still get prompt when running foreground
-    import pygame
-    global pygame, lcd
-    os.putenv('SDL_FBDEV', '/dev/fb1')  # This may need to change to accomodate a different type of disolay using different device frame buffer.
-    pygame.init()
-    lcd = pygame.display.set_mode((480, 320))
-
-
-def isNightTime():
-    now = datetime.datetime.now()
-    if now.hour in Defaults.NIGHTMODE:
-        return True
-    else:
-        return False
-
-def display_reading(readings, devicestatus):
-    thePlatform = platform.platform().lower()
-    reading = readings[0]  # Current Reading
-    last_reading = readings[1]  # Previous reading
-    log.debug(f"Current Reading: {readings[0]}")
-    log.debug(f"Previous Reading: {readings[1]}")
-
-    display = (thePlatform.find("arm") >= 0)
-
-    if display:
-        global pygame, lcd
-        log.debug("Getting ready to display on the LCD panel")
-        if thePlatform.find("linux") >= 0:
-            fonttouse = Defaults.Linux_font
-        elif thePlatform.find("macos") >= 0:
-            fonttouse = Defaults.Mac_font
-        else:
-            fonttouse = ""
-
-    log.debug(f"Displaying with Reading of {reading}")
-    now = datetime.datetime.now(datetime.timezone.utc)
-    reading_time = datetime.datetime.fromtimestamp(int(str(reading["date"])[0:10]), datetime.timezone.utc)
-    difference = round((now - reading_time).total_seconds()/60)
-    log.debug(f"Time difference since last good reading is: {difference}")
-    if difference == 0:
-        str_difference = "Just Now"
-    elif difference == 1:
-        str_difference = str(difference) + " Minute Ago"
-    else:
-        str_difference = str(difference) + " Minutes Ago"
-
-    if "direction" in reading:
-        trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[reading["direction"]])]
-    else:
-        trend_arrow = ""
-    log.debug(f"The arrow direction is: {trend_arrow}")
-
-    if difference < 7:
-        str_reading = str(reading["sgv"]) + trend_arrow
-    else:
-        str_reading = "---"
-    log.debug(f"About to push: {str_reading} to the display")
-
-    change = reading["sgv"] - last_reading["sgv"]
-    str_change = str(change)
-    if change > 0:
-        str_change = "+"+str(change)
-    log.debug(f"Change from last reading is: {change}")
-
-    if devicestatus and "loop" in devicestatus[0]:
-        loop_time = datetime.datetime.strptime(devicestatus[0]['loop']['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-        loop_time_difference = round((now - loop_time).total_seconds()/60)
-        if 0 <= loop_time_difference <= 5:
-            loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), Defaults.Loop_Fresh)
-        elif (6 <= loop_time_difference <= 10):
-            loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), Defaults.Loop_Aging)
-        else:
-            loop_image = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), Defaults.Loop_Stale)
-        log.info(f"Loop Age:{loop_time_difference} Minutes, Loop Image Used:{loop_image}")
-    else:
-        loop_image = None
-        log.info(f"No Loop Data, No Loop status Image Used")
+def _epoch_to_utc_datetime(epoch: Any) -> datetime.datetime:
+    """Convert seconds-or-milliseconds epoch to an aware UTC datetime."""
 
     try:
-        log.debug(f"Displaying:\n\t {str_difference}\n\t{str_reading}\n\t{str_change}")
-        if display:
-            if isNightTime():
-                log.debug("Setting to Nighttime mode")
-                lcd.fill(Defaults.BLACK)
-                font_color = Defaults.GREY
-            else:
-                log.debug("Setting to Daylight mode")
-                lcd.fill(Defaults.BLUE)
-                font_color = Defaults.WHITE
+        value = int(epoch)
+    except Exception:
+        value = int(str(epoch)[0:10])
 
-            log.debug("Setting up Difference Display")
-            font_time = pygame.font.Font(None, 75)
-            text_surface = font_time.render(str_difference, True, font_color)
-            rect = text_surface.get_rect(center=(240, 20))
-            lcd.blit(text_surface, rect)
+    # Nightscout "date" is commonly ms since epoch.
+    if value > 1_000_000_000_000:
+        value = value // 1000
+    return datetime.datetime.fromtimestamp(value, datetime.timezone.utc)
 
-            log.debug("Setting up Reading Display")
-            font_big = pygame.font.SysFont(fonttouse, 200)
 
-            text_surface = font_big.render(str_reading, True, font_color)
-            rect = text_surface.get_rect(center=(240, 155))
-            lcd.blit(text_surface, rect)
+def _format_time_ago(minutes: int) -> str:
+    if minutes <= 0:
+        return "Just Now"
+    if minutes == 1:
+        return "1 Minute Ago"
+    return f"{minutes} Minutes Ago"
 
-            font_medium = pygame.font.Font(None, 135)
-            text_surface = font_medium.render(str_change, True, font_color)
-            rect = text_surface.get_rect(center=(240, 275))
-            lcd.blit(text_surface, rect)
 
-            if loop_image is not None:
-                log.debug(f'Using Loop Image file: {loop_image}')
-                text_surface = pygame.image.load(loop_image)
-                rect = text_surface.get_rect(center=(450, 290))
-                lcd.blit(text_surface, rect)
+def _get_loop_image_path(devicestatus: Any, now_utc: datetime.datetime) -> Optional[str]:
+    if not devicestatus or not isinstance(devicestatus, list) or not devicestatus[0]:
+        log.info("No Loop Data, No Loop status Image Used")
+        return None
 
-            log.debug("About to update the LCD display")
-            pygame.display.update()
-            pygame.mouse.set_visible(False)
-        else:
-            log.info("Skipped display, not on Raspberry Pi")
+    loop = devicestatus[0].get("loop")
+    if not loop or "timestamp" not in loop:
+        log.info("No Loop Data, No Loop status Image Used")
+        return None
+
+    try:
+        loop_time = datetime.datetime.strptime(loop["timestamp"], "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=datetime.timezone.utc
+        )
+    except Exception:
+        log.info("No Loop Data, No Loop status Image Used")
+        return None
+
+    loop_age_minutes = round((now_utc - loop_time).total_seconds() / 60)
+    if 0 <= loop_age_minutes <= 5:
+        loop_image = Defaults.Loop_Fresh
+    elif 6 <= loop_age_minutes <= 10:
+        loop_image = Defaults.Loop_Aging
+    else:
+        loop_image = Defaults.Loop_Stale
+
+    loop_image_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), loop_image)
+    log.info(f"Loop Age:{loop_age_minutes} Minutes, Loop Image Used:{loop_image_path}")
+    return loop_image_path
+
+
+def display_reading(
+    readings: Any,
+    devicestatus: Any,
+    *,
+    display: Optional[PygameDisplay],
+    connection_ok: bool,
+) -> Optional[dict[str, Any]]:
+    if not readings or not isinstance(readings, list) or len(readings) < 2:
+        log.warning("No readings (or not enough readings) returned from Nightscout")
+        return None
+
+    reading = readings[0]
+    last_reading = readings[1]
+    if not isinstance(reading, dict) or not isinstance(last_reading, dict):
+        log.warning("Unexpected readings format returned from Nightscout")
+        return None
+
+    if "date" not in reading or "sgv" not in reading or "sgv" not in last_reading:
+        log.warning("Nightscout reading missing required fields")
+        return None
+
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    reading_time = _epoch_to_utc_datetime(reading["date"])
+    difference_minutes = round((now_utc - reading_time).total_seconds() / 60)
+    str_difference = _format_time_ago(difference_minutes)
+
+    direction = reading.get("direction")
+    if direction in Defaults.DIRECTIONS:
+        trend_arrow = Defaults.ARROWS[str(Defaults.DIRECTIONS[direction])]
+    else:
+        trend_arrow = ""
+
+    if difference_minutes < 7:
+        str_reading = f"{reading['sgv']}{trend_arrow}"
+    else:
+        str_reading = "---"
+
+    change_value = reading["sgv"] - last_reading["sgv"]
+    str_change = f"+{change_value}" if change_value > 0 else str(change_value)
+
+    loop_image_path = _get_loop_image_path(devicestatus, now_utc)
+
+    log.debug(f"Displaying:\n\t{str_difference}\n\t{str_reading}\n\t{str_change}")
+    if display is None:
+        log.info("Skipped display, not on Raspberry Pi")
+        return reading
+
+    try:
+        display.render(
+            difference=str_difference,
+            reading=str_reading,
+            change=str_change,
+            loop_image_path=loop_image_path,
+            connection_ok=connection_ok,
+        )
     except Exception as e:
         log.info("Caught an Exception processing the display")
         log.error(e, exc_info=True)
-    finally:
-        log.debug("Done with display")
     return reading
 
 
-i = 0
-while True:
-    i += 1
-    try:
-        log.info(f"Getting Reading and Device Status from Nightscout - Loop #{i}")
-        display_reading(nightscout.getReading(), nightscout.getDeviceStatus())
+def main() -> int:
+    args = cgm_args()
+    if args.logging == "DEBUG":
+        log.setLevel(logging.DEBUG)
 
+    if not args.night_scout_server:
+        log.error("No Nightscout URL defined. Exiting")
+        return 2
+
+    log.debug(f"Using Arguments: {args}")
+
+    polling_interval = int(args.polling_interval)
+    time_ago_interval = int(args.time_ago_interval)
+    tick_interval = max(1, min(polling_interval, time_ago_interval))
+
+    log.debug(f"Platform we're running on is: {platform.platform()}")
+
+    # Per user preference: always attempt pygame display initialization regardless of platform,
+    # and fail fast if it can't initialize.
+    try:
+        display = PygameDisplay()
     except Exception as e:
-        log.error(e,exc_info=True)
-        log.info("Exception processing The Reading, Sleeping and trying again....")
-    sleep(CHECK_INTERVAL)
+        log.error("pygame not initialized; there will be no video device")
+        log.error("Failed to initialize pygame display; exiting")
+        log.error(e, exc_info=True)
+        return 3
+
+    nightscout = Nightscout(args.night_scout_server)
+
+    loop_count = 0
+    last_fetch: Optional[datetime.datetime] = None
+    last_readings: Any = None
+    last_devicestatus: Any = None
+    last_fetch_ok = False
+
+    while True:
+        loop_count += 1
+        try:
+            now = datetime.datetime.now(datetime.timezone.utc)
+            should_fetch = last_fetch is None or (now - last_fetch).total_seconds() >= polling_interval
+            if should_fetch:
+                log.info(f"Getting Reading and Device Status from Nightscout - Loop #{loop_count}")
+                try:
+                    last_readings = nightscout.getReading()
+                    last_devicestatus = nightscout.getDeviceStatus()
+                    last_fetch = now
+                    last_fetch_ok = True
+                except Exception as e:
+                    last_fetch_ok = False
+                    # If we have never successfully fetched data, show a full-screen connection error.
+                    if last_fetch is None:
+                        log.error("Initial Nightscout connection failed")
+                        log.error(e, exc_info=True)
+                        display.render_connection_error(detail=str(e))
+                        sleep(tick_interval)
+                        continue
+
+                    # Otherwise, keep the last displayed reading and try again next poll.
+                    log.error("Nightscout fetch failed; keeping last known readings")
+                    log.error(e, exc_info=True)
+
+            display_reading(last_readings, last_devicestatus, display=display, connection_ok=last_fetch_ok)
+
+        except KeyboardInterrupt:
+            log.info("Exiting on KeyboardInterrupt")
+            return 0
+        except Exception as e:
+            log.error(e, exc_info=True)
+            log.info("Exception processing the reading, sleeping and trying again....")
+
+        sleep(tick_interval)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
