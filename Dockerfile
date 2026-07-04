@@ -29,4 +29,4 @@ USER cgmdisplay
 COPY . .
 
 # Run the application.
-CMD ["python3", "-m", "nightscout_display.py", "--nightscoutserver", "https://nightscout.blanckfamily.net"]
+CMD ["python3", "cgm_display.py", "nightscout", "--nightscoutserver", "https://nightscout.blanckfamily.net"]

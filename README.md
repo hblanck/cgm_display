@@ -49,26 +49,50 @@ Raspberry Pi Version:
 # Installation
 - I am not going to cover basic Raspberry Pi setup and configuration.  Minimum requirement is to have your Pi built, current Raspian OS installed and configured and connected to your WiFi network.  You should be able to login to your Pi with the standard pi user account via Desktop or Command Line.  Good getting started information can be found here: https://projects.raspberrypi.org/en/projects/raspberry-pi-getting-started
 
-# PiTFT LCD Display
-- PiTFT LCD display also needs to be installed and connected to the GPIO pins on your Pi.
-- Follow the PiTFT software installation instructions: https://learn.adafruit.com/adafruit-pitft-3-dot-5-touch-screen-for-raspberry-pi/easy-install-2
-- Download this zip file (https://github.com/hblanck/cgm_display/archive/master.zip).  Unzip in your /home/pi directory (all instructions will assume this location).
-- Modify /home/pi/cgm_display/cgm_display.ini and put your Login name and password.  These are the ones you use in your Dexcom share app (not follow).  Save the file.  If you don't want to store your credentials in a file you can use the --username and --password command line options.
-- To run as a foreground application "cd ~/cgm_display ; sudo python3 cgm_display.py"
-- To install it to run at boot up automatically add the following line to your startup script.  To edit /etc/rc.local, 'sudo nano /etc/rc.local'.
-Add the following line: "sudo python3 /home/pi/cgm_display/cgm_display.py --username=USERNAME --password=PASSWORD --logging=INFO > /var/log/cgm_display.log 2>&1 &"
- (Note: use --logging=DEBUG for debug level logging)
+# Running cgm_display
 
-# Sugarmate with LCD display Version (this won't fetch data directly from Dexcom)
-- Same as above for PiTFT LCD Display
-- Modiy /etc/rc.local to start the sugarmate_display.py application
-- "sudo nano /etc/rc.local"
-- The execution line should say "sudo python3 /home/pi/cgm_display/sugarmate_display.py --apikey [your sugarmate api key] --polling_interval 30 > /var/log/sugarmate_display.log 2>&1 &"
+The unified `cgm_display.py` entry point supports both Nightscout and Dexcom data sources via subcommands.
 
-# Sugarmate with e-Ink display version (this won't fetch data directly from Dexcom)
-- First we will need to download the e-ink drivers from waveshare.  From the pi home directoy "git clone https://github.com/waveshare/e-Paper"
-- Copy the python libraries to our application directory for easier reference (this assumes the application is in /home/pi/cgm_display and waveshare libraries were cloned from get into /home/pi/e_Paper-master) "mkdir /home/pi/cgm_display/lib;cp -r /home/pi/e-Paper-master/RaspberryPi\&JetsonNano/python/lib/* /home/pi/cgm_display/lib/".
-- Currently only supports the 2.7inch version.  May work with others, but different libraries would need to be called.  TBD to make this more flexible and extensible.
-- Modify /etc/rc.local to start the e-ink_display.py application.
-- "sudo nano /etc/rc.local"
-- The execution line should say "sudo python3 /home/pi/cgm_display/e-ink_display.py --apikey [your sugarmate api key] --polling_interval 30 > /var/log/e-ink_display.log 2>%1 &"
+## Nightscout Mode
+
+To run with a Nightscout server:
+```bash
+python3 cgm_display.py nightscout --nightscoutserver https://your-nightscout-server.com
+```
+
+Optional arguments:
+- `--logging INFO|DEBUG` - Set logging level (default: INFO)
+- `--polling_interval N` - How often to fetch new readings in seconds (default: 60)
+- `--time_ago_interval N` - How often to update the "time ago" display in seconds (default: 30)
+
+To run at boot automatically, add to `/etc/rc.local`:
+```bash
+sudo python3 /home/pi/cgm_display/cgm_display.py nightscout --nightscoutserver https://your-nightscout.com --logging=INFO > /var/log/cgm_display.log 2>&1 &
+```
+
+## Dexcom Mode
+
+To run with Dexcom Share credentials:
+```bash
+python3 cgm_display.py dexcom --username YOUR_USERNAME --password YOUR_PASSWORD
+```
+
+Alternatively, store credentials in `/home/pi/cgm_display/cgm_display.ini` under the `[dexcomshare]` section and omit the command-line credentials.
+
+Optional arguments:
+- `--logging INFO|DEBUG` - Set logging level (default: INFO)
+- `--polling_interval N` - How often to fetch new readings in seconds (default: 180)
+- `--time_ago_interval N` - How often to update the "time ago" display in seconds (default: 30)
+
+To run at boot automatically, add to `/etc/rc.local`:
+```bash
+sudo python3 /home/pi/cgm_display/cgm_display.py dexcom --username YOUR_USERNAME --password YOUR_PASSWORD --logging=INFO > /var/log/cgm_display.log 2>&1 &
+```
+
+# Archived Display Options
+
+The following display options are no longer actively maintained and have been archived to the `archive/` directory:
+
+- **sugarmate_display.py** - Sugarmate API integration (alternative to Dexcom)
+- **e-ink_display.py** - Waveshare e-ink display support
+- **cgm_display_2displays.py** - Dual-display variant (monitoring two users)
