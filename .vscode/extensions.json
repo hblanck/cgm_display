@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.debugpy",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "eamodio.gitlens",
+    "GitHub.copilot",
+    "GitHub.copilot-chat"
+  ]
+}
