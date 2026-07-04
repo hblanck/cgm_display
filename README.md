@@ -72,22 +72,54 @@ sudo python3 /home/pi/cgm_display/cgm_display.py nightscout --nightscoutserver h
 
 ## Dexcom Mode
 
-To run with Dexcom Share credentials:
+Credentials are resolved in this order (first found wins):
+1. Command-line arguments: `--username` and `--password`
+2. Environment variables: `DEXCOM_USERNAME` and `DEXCOM_PASSWORD`
+
+### Using Command-Line Arguments
 ```bash
 python3 cgm_display.py dexcom --username YOUR_USERNAME --password YOUR_PASSWORD
 ```
 
-Alternatively, store credentials in `/home/pi/cgm_display/cgm_display.ini` under the `[dexcomshare]` section and omit the command-line credentials.
+### Using Environment Variables (Recommended)
+Set environment variables and run without credentials in the command:
+```bash
+export DEXCOM_USERNAME=your_username
+export DEXCOM_PASSWORD=your_password
+python3 cgm_display.py dexcom
+```
 
-Optional arguments:
+### Using Systemd Service
+Create `/etc/systemd/system/cgm-display.service`:
+```ini
+[Unit]
+Description=CGM Display
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/cgm_display
+Environment="DEXCOM_USERNAME=your_username"
+Environment="DEXCOM_PASSWORD=your_password"
+ExecStart=/usr/bin/python3 /home/pi/cgm_display/cgm_display.py dexcom --logging=INFO
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Using Docker
+Pass credentials as environment variables:
+```bash
+docker run -e DEXCOM_USERNAME=user -e DEXCOM_PASSWORD=pass your-image cgm_display.py dexcom
+```
+
+### Optional Arguments
 - `--logging INFO|DEBUG` - Set logging level (default: INFO)
 - `--polling_interval N` - How often to fetch new readings in seconds (default: 180)
 - `--time_ago_interval N` - How often to update the "time ago" display in seconds (default: 30)
-
-To run at boot automatically, add to `/etc/rc.local`:
-```bash
-sudo python3 /home/pi/cgm_display/cgm_display.py dexcom --username YOUR_USERNAME --password YOUR_PASSWORD --logging=INFO > /var/log/cgm_display.log 2>&1 &
-```
 
 # Archived Display Options
 

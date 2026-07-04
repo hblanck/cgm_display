@@ -108,8 +108,6 @@ def create_data_source(args: cgm_args) -> Nightscout | DexcomDataSource:
             raise ValueError("--nightscoutserver is required for nightscout mode")
         return Nightscout(args.night_scout_server)
     elif args.command == "dexcom":
-        if not args.username or not args.password:
-            raise ValueError("--username and --password are required for dexcom mode")
         return DexcomDataSource(args.username, args.password, int(args.polling_interval))
     else:
         raise ValueError(f"Unknown command: {args.command}. Use 'nightscout' or 'dexcom'")

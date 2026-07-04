@@ -4,3 +4,12 @@ __pycache__
 .venv/
 .vscode/*
 CHAT*
+
+# Credentials and config files (do NOT store credentials in git)
+*.ini
+*.conf
+credentials.txt
+.env
+.env.local
+*.key
+*.secret

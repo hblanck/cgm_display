@@ -1,11 +1,17 @@
 """Dexcom Share API client for CGM display.
 
 Fetches CGM readings from Dexcom Share servers.
+
+Credentials are loaded in this order of precedence:
+1. Command-line arguments (--username, --password)
+2. Environment variables (DEXCOM_USERNAME, DEXCOM_PASSWORD)
+3. None (will raise error if not provided)
 """
 
 from __future__ import annotations
 
 import datetime
+import os
 import re
 from typing import Any, Optional
 
@@ -15,11 +21,22 @@ from logger import log
 
 
 class DexcomDataSource:
-    """Fetches CGM readings from Dexcom Share API."""
+    """Fetches CGM readings from Dexcom Share API.
 
-    def __init__(self, username: str, password: str, polling_interval: int = 180):
-        self.username = username
-        self.password = password
+    Credentials resolved in order: command-line args > environment variables.
+    """
+
+    def __init__(self, username: Optional[str] = None, password: Optional[str] = None, polling_interval: int = 180):
+        # Resolve credentials from args, environment, or raise error
+        self.username = username or os.environ.get("DEXCOM_USERNAME")
+        self.password = password or os.environ.get("DEXCOM_PASSWORD")
+
+        if not self.username or not self.password:
+            raise ValueError(
+                "Dexcom credentials not provided. Use --username/--password arguments, "
+                "or set DEXCOM_USERNAME and DEXCOM_PASSWORD environment variables."
+            )
+
         self.polling_interval = polling_interval
         self.session_id: Optional[str] = None
         self._create_opts()
