@@ -1,5 +1,5 @@
 import requests
-from logger import log
+from .logger import log
 
 class Nightscout:
     def __init__(self, server) -> None:

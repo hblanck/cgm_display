@@ -12,8 +12,8 @@ import platform
 import sys
 from typing import Optional
 
-from Defaults import Defaults
-from logger import log
+from .Defaults import Defaults
+from .logger import log
 
 
 def _is_night_time() -> bool:

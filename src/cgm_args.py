@@ -17,10 +17,16 @@ class cgm_args:
         # Add Subparser for 'dexcom' command
         add_parsers = subparsers.add_parser("dexcom", help="Dexcom mode - Get Display data from a Dexcom server")
         add_parsers.add_argument("--logging", "-l", default="INFO", help="Logging level: INFO (Default) or DEBUG")
-        add_parsers.add_argument("--polling_interval", default=60, help="Polling interval for getting updates from Sugarmate")
+        add_parsers.add_argument("--polling_interval", default=60, help="Polling interval for getting updates from Dexcom")
         add_parsers.add_argument("--time_ago_interval", default=30, help="Polling interval for updating the \"Time Ago\" detail")
-        add_parsers.add_argument("--username", "-u", help="Dexcom Share User Name")
-        add_parsers.add_argument("--password", "-p", help="Dexcom Share Password")
+        add_parsers.add_argument(
+            "--username", "-u",
+            help="Dexcom Share user name (or set DEXCOM_USERNAME environment variable)"
+        )
+        add_parsers.add_argument(
+            "--password", "-p",
+            help="Dexcom Share password (or set DEXCOM_PASSWORD environment variable)"
+        )
         self.args = ArgParser.parse_args()
 
     @property
@@ -46,3 +52,7 @@ class cgm_args:
     @property
     def password(self):
         return self.args.password
+
+    @property
+    def command(self):
+        return self.args.command

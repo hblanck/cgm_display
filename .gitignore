@@ -1,6 +1,43 @@
+# Python
 __pycache__
+.venv/
+*.pyc
+*.pyo
+
+# Git and OS
 .git
 .DS_Store
-.venv/
+Thumbs.db
+
+# IDE Configuration (share project config, ignore personal settings)
+.idea/                              # JetBrains IDEs
 .vscode/*
+!.vscode/launch.json               # Share debug configurations
+!.vscode/extensions.json           # Share extension recommendations
+
+# Claude Code (ignore personal settings and memory)
+.claude/
+.claude/settings.json
+.claude/settings.local.json
+.claude/keybindings.json
+.claude/memories/
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.*.swp
+
+# Chat/working files
 CHAT*
+
+# Credentials and sensitive files (NEVER commit these)
+*.ini
+*.conf
+credentials.txt
+.env
+.env.local
+.env.*.local
+*.key
+*.secret
+*.pem

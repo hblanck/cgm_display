@@ -4,8 +4,10 @@ CGM Display Project
 Always on CGM Display.  Designed for Raspberry Pi using Adafruit's PiTFT Plus 3.5" display (parts list I used below).
 This depends on Dexcom CGM data from the Dexcom server or from an active Sugarmate account using the Sugarmate API.
 
-![Alt text](IMG_0440.jpeg?raw=true "CGM Display")
-![Alt text](IMG_2247.jpeg?raw=true "e-Ink Display")
+![Alt text](assets/images/IMG_0440.jpeg?raw=true "CGM Display")
+![Alt text](assets/images/IMG_2247.jpeg?raw=true "e-Ink Display")
+
+**Quick Links**: [Installation](#installation) • [Running](#running-cgm_display) • [Changelog](CHANGELOG.md) • [Directory Structure](#project-directory-structure)
 
 # Credits
 
@@ -47,28 +49,205 @@ Raspberry Pi Version:
 - Tested with current Raspberry Pi OS (formerly Raspian) as of 9/1920.  Full version with all recommended packages
 
 # Installation
-- I am not going to cover basic Raspberry Pi setup and configuration.  Minimum requirement is to have your Pi built, current Raspian OS installed and configured and connected to your WiFi network.  You should be able to login to your Pi with the standard pi user account via Desktop or Command Line.  Good getting started information can be found here: https://projects.raspberrypi.org/en/projects/raspberry-pi-getting-started
 
-# PiTFT LCD Display
-- PiTFT LCD display also needs to be installed and connected to the GPIO pins on your Pi.
-- Follow the PiTFT software installation instructions: https://learn.adafruit.com/adafruit-pitft-3-dot-5-touch-screen-for-raspberry-pi/easy-install-2
-- Download this zip file (https://github.com/hblanck/cgm_display/archive/master.zip).  Unzip in your /home/pi directory (all instructions will assume this location).
-- Modify /home/pi/cgm_display/cgm_display.ini and put your Login name and password.  These are the ones you use in your Dexcom share app (not follow).  Save the file.  If you don't want to store your credentials in a file you can use the --username and --password command line options.
-- To run as a foreground application "cd ~/cgm_display ; sudo python3 cgm_display.py"
-- To install it to run at boot up automatically add the following line to your startup script.  To edit /etc/rc.local, 'sudo nano /etc/rc.local'.
-Add the following line: "sudo python3 /home/pi/cgm_display/cgm_display.py --username=USERNAME --password=PASSWORD --logging=INFO > /var/log/cgm_display.log 2>&1 &"
- (Note: use --logging=DEBUG for debug level logging)
+## Basic Raspberry Pi Setup
+I am not going to cover basic Raspberry Pi setup and configuration.  Minimum requirement is to have your Pi built, current Raspian OS installed and configured and connected to your WiFi network.  You should be able to login to your Pi with the standard pi user account via Desktop or Command Line.  Good getting started information can be found here: https://projects.raspberrypi.org/en/projects/raspberry-pi-getting-started
 
-# Sugarmate with LCD display Version (this won't fetch data directly from Dexcom)
-- Same as above for PiTFT LCD Display
-- Modiy /etc/rc.local to start the sugarmate_display.py application
-- "sudo nano /etc/rc.local"
-- The execution line should say "sudo python3 /home/pi/cgm_display/sugarmate_display.py --apikey [your sugarmate api key] --polling_interval 30 > /var/log/sugarmate_display.log 2>&1 &"
+## PiTFT LCD Display Hardware Installation
+The PiTFT Plus 3.5" display requires proper hardware setup and software installation:
 
-# Sugarmate with e-Ink display version (this won't fetch data directly from Dexcom)
-- First we will need to download the e-ink drivers from waveshare.  From the pi home directoy "git clone https://github.com/waveshare/e-Paper"
-- Copy the python libraries to our application directory for easier reference (this assumes the application is in /home/pi/cgm_display and waveshare libraries were cloned from get into /home/pi/e_Paper-master) "mkdir /home/pi/cgm_display/lib;cp -r /home/pi/e-Paper-master/RaspberryPi\&JetsonNano/python/lib/* /home/pi/cgm_display/lib/".
-- Currently only supports the 2.7inch version.  May work with others, but different libraries would need to be called.  TBD to make this more flexible and extensible.
-- Modify /etc/rc.local to start the e-ink_display.py application.
-- "sudo nano /etc/rc.local"
-- The execution line should say "sudo python3 /home/pi/cgm_display/e-ink_display.py --apikey [your sugarmate api key] --polling_interval 30 > /var/log/e-ink_display.log 2>%1 &"
+1. **Physical Assembly**
+   - Connect the PiTFT display to the GPIO pins on your Raspberry Pi
+   - If using Pi Zero W, solder or use a solderless header connector (Hammer Header recommended)
+   - Mount in case if desired (PiTFT Pibow+ case works well)
+
+2. **Software Installation**
+   - Follow the Adafruit PiTFT software installation instructions: https://learn.adafruit.com/adafruit-pitft-3-dot-5-touch-screen-for-raspberry-pi/easy-install-2
+   - This installs the necessary kernel drivers and framebuffer support at `/dev/fb1`
+
+3. **Clone CGM Display Application**
+   - Download this repo: `git clone https://github.com/hblanck/cgm_display /home/pi/cgm_display`
+   - Or download zip file: https://github.com/hblanck/cgm_display/archive/master.zip
+   - Extract to `/home/pi/cgm_display` directory
+
+4. **Install Python Dependencies**
+   ```bash
+   cd /home/pi/cgm_display
+   python3 -m pip install -r requirements.txt
+   ```
+
+# Running cgm_display
+
+The unified `cgm_display.py` entry point supports both Nightscout and Dexcom data sources via subcommands.
+
+## Nightscout Mode
+
+To run with a Nightscout server:
+```bash
+python3 cgm_display.py nightscout --nightscoutserver https://your-nightscout-server.com
+```
+
+Optional arguments:
+- `--logging INFO|DEBUG` - Set logging level (default: INFO)
+- `--polling_interval N` - How often to fetch new readings in seconds (default: 60)
+- `--time_ago_interval N` - How often to update the "time ago" display in seconds (default: 30)
+
+To run at boot automatically, add to `/etc/rc.local`:
+```bash
+sudo python3 /home/pi/cgm_display/cgm_display.py nightscout --nightscoutserver https://your-nightscout.com --logging=INFO > /var/log/cgm_display.log 2>&1 &
+```
+
+## Dexcom Mode
+
+Credentials are resolved in this order (first found wins):
+1. Command-line arguments: `--username` and `--password`
+2. Environment variables: `DEXCOM_USERNAME` and `DEXCOM_PASSWORD`
+
+### Using Command-Line Arguments
+```bash
+python3 cgm_display.py dexcom --username YOUR_USERNAME --password YOUR_PASSWORD
+```
+
+### Using Environment Variables (Recommended)
+Set environment variables and run without credentials in the command:
+```bash
+export DEXCOM_USERNAME=your_username
+export DEXCOM_PASSWORD=your_password
+python3 cgm_display.py dexcom
+```
+
+### Using Systemd Service
+Create `/etc/systemd/system/cgm-display.service`:
+```ini
+[Unit]
+Description=CGM Display
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/cgm_display
+Environment="DEXCOM_USERNAME=your_username"
+Environment="DEXCOM_PASSWORD=your_password"
+ExecStart=/usr/bin/python3 /home/pi/cgm_display/cgm_display.py dexcom --logging=INFO
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Using Docker
+
+**Quick Start with .env file**:
+```bash
+# Copy example and fill in your credentials
+cp .env.example .env
+# Edit .env with your credentials
+
+# Run with Docker using .env file
+docker run --env-file .env cgm-display cgm_display.py dexcom
+```
+
+**With inline environment variables**:
+```bash
+docker run \
+  -e DEXCOM_USERNAME=your_username \
+  -e DEXCOM_PASSWORD=your_password \
+  cgm-display cgm_display.py dexcom
+```
+
+**With Docker Compose**:
+Create a `docker-compose.yml`:
+```yaml
+version: '3.8'
+services:
+  cgm-display:
+    build: .
+    env_file: .env
+    environment:
+      - CGM_LOG_LEVEL=INFO
+    stdin_open: true
+    tty: true
+```
+
+Then run:
+```bash
+docker-compose up -d
+```
+
+**Environment Variables Available** (see `.env.example`):
+- `DEXCOM_USERNAME` — Dexcom Share username
+- `DEXCOM_PASSWORD` — Dexcom Share password
+- `NIGHTSCOUT_SERVER` — Nightscout server URL
+- `CGM_POLLING_INTERVAL` — Fetch interval in seconds (optional)
+- `CGM_TIME_AGO_INTERVAL` — Display update interval in seconds (optional)
+- `CGM_LOG_LEVEL` — INFO or DEBUG (optional)
+
+### Optional Arguments
+- `--logging INFO|DEBUG` - Set logging level (default: INFO)
+- `--polling_interval N` - How often to fetch new readings in seconds (default: 180)
+- `--time_ago_interval N` - How often to update the "time ago" display in seconds (default: 30)
+
+# Project Directory Structure
+
+```
+cgm_display/
+├── src/                          # Python source modules
+│   ├── __init__.py
+│   ├── cgm_args.py              # Command-line argument parsing
+│   ├── cgm_display.py            # (entry point also in root)
+│   ├── Defaults.py               # Configuration constants
+│   ├── dexcom_data.py            # Dexcom API client
+│   ├── http_general.py           # Dexcom HTTP utilities
+│   ├── logger.py                 # Logging configuration
+│   ├── nightscout_data.py        # Nightscout API client
+│   └── pygame_display.py         # Display rendering
+│
+├── assets/                       # Images and resources
+│   ├── images/                   # Documentation/display images
+│   │   ├── IMG_0440.jpeg        # PiTFT display example
+│   │   ├── IMG_2247.jpeg        # e-Ink display example
+│   │   └── IMG_5750.png         # Another display image
+│   ├── loop-status/              # Loop status indicator icons
+│   │   ├── loop-aging@38mm.png
+│   │   ├── loop-fresh@38mm.png
+│   │   └── loop-stale@38mm.png
+│   └── nightscout_large.png      # Nightscout icon (downloaded at runtime)
+│
+├── docs/                         # Documentation files
+│   └── THIRD_PARTY_NOTICES.md   # License attributions
+│
+├── archive/                      # Archived/obsolete code (preserved for reference)
+│   ├── cgm_display_2displays.py  # Old: dual-display variant
+│   ├── cgm_display_legacy.py     # Old: legacy Dexcom implementation
+│   ├── e-ink_display.py          # Old: Waveshare e-ink support
+│   └── sugarmate_display.py      # Old: Sugarmate API variant
+│
+├── cgm_display.py                # Main entry point
+├── Dockerfile                    # Container configuration
+├── requirements.txt              # Python dependencies
+├── README.md                     # This file
+└── .gitignore                    # Git exclusions
+```
+
+## Directory Organization
+
+- **`src/`** — All Python source code organized as a package
+- **`assets/`** — Static resources (images, icons)
+  - `images/` — Documentation images (screenshots, diagrams)
+  - `loop-status/` — Loop device status indicator images
+- **`docs/`** — Project documentation files
+- **`archive/`** — Obsolete/unmaintained code (preserved in git history for reference)
+- **Root files** — Configuration files and main entry point
+
+# Archived Display Options
+
+The following display options are no longer actively maintained and have been archived to the `archive/` directory (see git history for reference):
+
+- **cgm_display_legacy.py** - Original Dexcom Share implementation
+- **sugarmate_display.py** - Sugarmate API integration (alternative to Dexcom)
+- **e-ink_display.py** - Waveshare e-ink display support
+- **cgm_display_2displays.py** - Dual-display variant (monitoring two users)
+
+Use the modern unified **cgm_display.py** entry point instead, which supports both Nightscout and Dexcom data sources.
