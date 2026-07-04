@@ -47,7 +47,32 @@ Raspberry Pi Version:
 - Tested with current Raspberry Pi OS (formerly Raspian) as of 9/1920.  Full version with all recommended packages
 
 # Installation
-- I am not going to cover basic Raspberry Pi setup and configuration.  Minimum requirement is to have your Pi built, current Raspian OS installed and configured and connected to your WiFi network.  You should be able to login to your Pi with the standard pi user account via Desktop or Command Line.  Good getting started information can be found here: https://projects.raspberrypi.org/en/projects/raspberry-pi-getting-started
+
+## Basic Raspberry Pi Setup
+I am not going to cover basic Raspberry Pi setup and configuration.  Minimum requirement is to have your Pi built, current Raspian OS installed and configured and connected to your WiFi network.  You should be able to login to your Pi with the standard pi user account via Desktop or Command Line.  Good getting started information can be found here: https://projects.raspberrypi.org/en/projects/raspberry-pi-getting-started
+
+## PiTFT LCD Display Hardware Installation
+The PiTFT Plus 3.5" display requires proper hardware setup and software installation:
+
+1. **Physical Assembly**
+   - Connect the PiTFT display to the GPIO pins on your Raspberry Pi
+   - If using Pi Zero W, solder or use a solderless header connector (Hammer Header recommended)
+   - Mount in case if desired (PiTFT Pibow+ case works well)
+
+2. **Software Installation**
+   - Follow the Adafruit PiTFT software installation instructions: https://learn.adafruit.com/adafruit-pitft-3-dot-5-touch-screen-for-raspberry-pi/easy-install-2
+   - This installs the necessary kernel drivers and framebuffer support at `/dev/fb1`
+
+3. **Clone CGM Display Application**
+   - Download this repo: `git clone https://github.com/hblanck/cgm_display /home/pi/cgm_display`
+   - Or download zip file: https://github.com/hblanck/cgm_display/archive/master.zip
+   - Extract to `/home/pi/cgm_display` directory
+
+4. **Install Python Dependencies**
+   ```bash
+   cd /home/pi/cgm_display
+   python3 -m pip install -r requirements.txt
+   ```
 
 # Running cgm_display
 
