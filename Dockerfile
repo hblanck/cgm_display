@@ -29,4 +29,12 @@ USER cgmdisplay
 COPY . .
 
 # Run the application.
+# Default runs in Nightscout mode - override via environment variables or CMD
+#
+# Usage with docker run:
+#   docker run --env-file .env cgm-display cgm_display.py dexcom
+#   docker run -e DEXCOM_USERNAME=user -e DEXCOM_PASSWORD=pass cgm-display cgm_display.py dexcom
+#   docker run -e NIGHTSCOUT_SERVER=https://your-server.com cgm-display cgm_display.py nightscout
+#
+# See .env.example for available environment variables
 CMD ["python3", "cgm_display.py", "nightscout", "--nightscoutserver", "https://nightscout.blanckfamily.net"]

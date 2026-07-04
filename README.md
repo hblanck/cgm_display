@@ -138,10 +138,51 @@ WantedBy=multi-user.target
 ```
 
 ### Using Docker
-Pass credentials as environment variables:
+
+**Quick Start with .env file**:
 ```bash
-docker run -e DEXCOM_USERNAME=user -e DEXCOM_PASSWORD=pass your-image cgm_display.py dexcom
+# Copy example and fill in your credentials
+cp .env.example .env
+# Edit .env with your credentials
+
+# Run with Docker using .env file
+docker run --env-file .env cgm-display cgm_display.py dexcom
 ```
+
+**With inline environment variables**:
+```bash
+docker run \
+  -e DEXCOM_USERNAME=your_username \
+  -e DEXCOM_PASSWORD=your_password \
+  cgm-display cgm_display.py dexcom
+```
+
+**With Docker Compose**:
+Create a `docker-compose.yml`:
+```yaml
+version: '3.8'
+services:
+  cgm-display:
+    build: .
+    env_file: .env
+    environment:
+      - CGM_LOG_LEVEL=INFO
+    stdin_open: true
+    tty: true
+```
+
+Then run:
+```bash
+docker-compose up -d
+```
+
+**Environment Variables Available** (see `.env.example`):
+- `DEXCOM_USERNAME` — Dexcom Share username
+- `DEXCOM_PASSWORD` — Dexcom Share password
+- `NIGHTSCOUT_SERVER` — Nightscout server URL
+- `CGM_POLLING_INTERVAL` — Fetch interval in seconds (optional)
+- `CGM_TIME_AGO_INTERVAL` — Display update interval in seconds (optional)
+- `CGM_LOG_LEVEL` — INFO or DEBUG (optional)
 
 ### Optional Arguments
 - `--logging INFO|DEBUG` - Set logging level (default: INFO)
