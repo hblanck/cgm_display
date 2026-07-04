@@ -74,7 +74,7 @@ def _get_loop_image_path(devicestatus: Any, now_utc: datetime.datetime) -> Optio
     else:
         loop_image = Defaults.Loop_Stale
 
-    loop_image_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), loop_image)
+    loop_image_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "assets", "loop-status", loop_image)
     log.info(f"Loop Age:{loop_age_minutes} Minutes, Loop Image Used:{loop_image_path}")
     return loop_image_path
 

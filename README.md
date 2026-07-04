@@ -146,10 +146,65 @@ docker run -e DEXCOM_USERNAME=user -e DEXCOM_PASSWORD=pass your-image cgm_displa
 - `--polling_interval N` - How often to fetch new readings in seconds (default: 180)
 - `--time_ago_interval N` - How often to update the "time ago" display in seconds (default: 30)
 
+# Project Directory Structure
+
+```
+cgm_display/
+├── src/                          # Python source modules
+│   ├── __init__.py
+│   ├── cgm_args.py              # Command-line argument parsing
+│   ├── cgm_display.py            # (entry point also in root)
+│   ├── Defaults.py               # Configuration constants
+│   ├── dexcom_data.py            # Dexcom API client
+│   ├── http_general.py           # Dexcom HTTP utilities
+│   ├── logger.py                 # Logging configuration
+│   ├── nightscout_data.py        # Nightscout API client
+│   └── pygame_display.py         # Display rendering
+│
+├── assets/                       # Images and resources
+│   ├── images/                   # Documentation/display images
+│   │   ├── IMG_0440.jpeg        # PiTFT display example
+│   │   ├── IMG_2247.jpeg        # e-Ink display example
+│   │   └── IMG_5750.png         # Another display image
+│   ├── loop-status/              # Loop status indicator icons
+│   │   ├── loop-aging@38mm.png
+│   │   ├── loop-fresh@38mm.png
+│   │   └── loop-stale@38mm.png
+│   └── nightscout_large.png      # Nightscout icon (downloaded at runtime)
+│
+├── docs/                         # Documentation files
+│   └── THIRD_PARTY_NOTICES.md   # License attributions
+│
+├── archive/                      # Archived/obsolete code (preserved for reference)
+│   ├── cgm_display_2displays.py  # Old: dual-display variant
+│   ├── cgm_display_legacy.py     # Old: legacy Dexcom implementation
+│   ├── e-ink_display.py          # Old: Waveshare e-ink support
+│   └── sugarmate_display.py      # Old: Sugarmate API variant
+│
+├── cgm_display.py                # Main entry point
+├── Dockerfile                    # Container configuration
+├── requirements.txt              # Python dependencies
+├── README.md                     # This file
+└── .gitignore                    # Git exclusions
+```
+
+## Directory Organization
+
+- **`src/`** — All Python source code organized as a package
+- **`assets/`** — Static resources (images, icons)
+  - `images/` — Documentation images (screenshots, diagrams)
+  - `loop-status/` — Loop device status indicator images
+- **`docs/`** — Project documentation files
+- **`archive/`** — Obsolete/unmaintained code (preserved in git history for reference)
+- **Root files** — Configuration files and main entry point
+
 # Archived Display Options
 
-The following display options are no longer actively maintained and have been archived to the `archive/` directory:
+The following display options are no longer actively maintained and have been archived to the `archive/` directory (see git history for reference):
 
+- **cgm_display_legacy.py** - Original Dexcom Share implementation
 - **sugarmate_display.py** - Sugarmate API integration (alternative to Dexcom)
 - **e-ink_display.py** - Waveshare e-ink display support
 - **cgm_display_2displays.py** - Dual-display variant (monitoring two users)
+
+Use the modern unified **cgm_display.py** entry point instead, which supports both Nightscout and Dexcom data sources.
