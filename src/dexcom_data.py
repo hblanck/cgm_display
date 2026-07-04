@@ -15,9 +15,9 @@ import os
 import re
 from typing import Any, Optional
 
-import http_general
-from Defaults import Defaults
-from logger import log
+from . import http_general
+from .Defaults import Defaults
+from .logger import log
 
 
 class DexcomDataSource:

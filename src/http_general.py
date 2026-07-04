@@ -1,6 +1,6 @@
 import requests
 import urllib.parse
-from Defaults import Defaults
+from .Defaults import Defaults
 
 def login_payload(opts):
     """ Build payload for the auth api query """

@@ -18,12 +18,12 @@ import sys
 from time import sleep
 from typing import Any, Optional
 
-from Defaults import Defaults
-from cgm_args import cgm_args
-from dexcom_data import DexcomDataSource
-from logger import log
-from nightscout_data import Nightscout
-from pygame_display import PygameDisplay
+from src.Defaults import Defaults
+from src.cgm_args import cgm_args
+from src.dexcom_data import DexcomDataSource
+from src.logger import log
+from src.nightscout_data import Nightscout
+from src.pygame_display import PygameDisplay
 
 
 def _epoch_to_utc_datetime(epoch: Any) -> datetime.datetime:
